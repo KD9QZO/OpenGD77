@@ -15,43 +15,40 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
+
 #include "hardware/EEPROM.h"
 #if defined(USING_EXTERNAL_DEBUGGER)
 #include "SeggerRTT/RTT/SEGGER_RTT.h"
 #endif
 
-const uint8_t EEPROM_ADDRESS 	= 0x50;
-const uint8_t EEPROM_PAGE_SIZE 	= 128;
+
+
+const uint8_t EEPROM_ADDRESS = 0x50;
+const uint8_t EEPROM_PAGE_SIZE = 128;
+
 
 static bool _EEPROM_Write(int address, uint8_t *buf, int size);
 
-bool EEPROM_Write(int address, uint8_t *buf, int size)
-{
+
+bool EEPROM_Write(int address, uint8_t *buf, int size) {
 	bool retVal;
 
-	if (address / 128 == (address + size) / 128)
-	{
+	if (address / 128 == (address + size) / 128) {
 		// All of the data is in the same page in the EEPROM so can just be written sequentially in one write
 		retVal = _EEPROM_Write(address, buf, size);
-	}
-	else
-	{
+	} else {
 		// Either there is more data than the page size or the data needs to be split across multiple page boundaries
 		int writeSize = 128 - (address % 128);
-		retVal = true;// First time though need to prime the while loop
+		retVal = true;  // First time though need to prime the while loop
 
-		while ((writeSize > 0) && (retVal == true))
-		{
+		while ((writeSize > 0) && (retVal == true)) {
 			retVal = _EEPROM_Write(address, buf, writeSize);
 			address += writeSize;
 			buf += writeSize;
 			size -= writeSize;
-			if (size > 128)
-			{
+			if (size > 128) {
 				writeSize = 128;
-			}
-			else
-			{
+			} else {
 				writeSize = size;
 			}
 		}
@@ -63,16 +60,14 @@ bool EEPROM_Write(int address, uint8_t *buf, int size)
  * While calls this function as necessary to handle write across 128 byte page boundaries
  * and also for writes larger than 128 bytes.
  */
-static bool _EEPROM_Write(int address, uint8_t *buf, int size)
-{
+static bool _EEPROM_Write(int address, uint8_t *buf, int size) {
 	const int COMMAND_SIZE = 2;
 	int transferSize;
 	uint8_t tmpBuf[COMMAND_SIZE];
 	i2c_master_transfer_t masterXfer;
 	status_t status;
 
-	if (isI2cInUse)
-	{
+	if (isI2cInUse) {
 #if defined(USING_EXTERNAL_DEBUGGER) && defined(DEBUG_I2C)
 		SEGGER_RTT_printf(0, "Clash in EEPROM_Write (2) with %d\n",isI2cInUse);
 #endif
@@ -81,9 +76,7 @@ static bool _EEPROM_Write(int address, uint8_t *buf, int size)
 	taskENTER_CRITICAL();
 	isI2cInUse = 1;
 
-
-	while(size > 0)
-	{
+	while (size > 0) {
 		transferSize = (size > EEPROM_PAGE_SIZE) ? EEPROM_PAGE_SIZE : size;
 		tmpBuf[0] = address >> 8;
 		tmpBuf[1] = address & 0xff;
@@ -95,7 +88,7 @@ static bool _EEPROM_Write(int address, uint8_t *buf, int size)
 		masterXfer.subaddressSize = 0;
 		masterXfer.data = tmpBuf;
 		masterXfer.dataSize = COMMAND_SIZE;
-		masterXfer.flags = kI2C_TransferNoStopFlag;//kI2C_TransferDefaultFlag;
+		masterXfer.flags = kI2C_TransferNoStopFlag;  //kI2C_TransferDefaultFlag;
 
 		// EEPROM Will not respond if it is busy completing the previous write.
 		// So repeat the write command until it responds or timeout after 50
@@ -103,19 +96,16 @@ static bool _EEPROM_Write(int address, uint8_t *buf, int size)
 
 		int timeoutCount = 50;
 		status = kStatus_Success;
-		do
-		{
-			if(status != kStatus_Success)
-			{
+		do {
+			if (status != kStatus_Success) {
 				vTaskDelay(portTICK_PERIOD_MS * 1);
 			}
 
 			status = I2C_MasterTransferBlocking(I2C0, &masterXfer);
 
-		} while((status != kStatus_Success) && (timeoutCount-- > 0));
+		} while ((status != kStatus_Success) && (timeoutCount-- > 0));
 
-		if (status != kStatus_Success)
-		{
+		if (status != kStatus_Success) {
 			isI2cInUse = 0;
 			taskEXIT_CRITICAL();
 			return false;
@@ -128,11 +118,10 @@ static bool _EEPROM_Write(int address, uint8_t *buf, int size)
 		masterXfer.subaddressSize = 0;
 		masterXfer.data = buf;
 		masterXfer.dataSize = transferSize;
-		masterXfer.flags = kI2C_TransferNoStartFlag;//kI2C_TransferDefaultFlag;
+		masterXfer.flags = kI2C_TransferNoStartFlag;		//kI2C_TransferDefaultFlag;
 
 		status = I2C_MasterTransferBlocking(I2C0, &masterXfer);
-		if (status != kStatus_Success)
-		{
+		if (status != kStatus_Success) {
 			isI2cInUse = 0;
 			taskEXIT_CRITICAL();
 			return false;
@@ -147,16 +136,13 @@ static bool _EEPROM_Write(int address, uint8_t *buf, int size)
 	return true;
 }
 
-bool EEPROM_Read(int address, uint8_t *buf, int size)
-{
+bool EEPROM_Read(int address, uint8_t *buf, int size) {
 	const int COMMAND_SIZE = 2;
 	uint8_t tmpBuf[COMMAND_SIZE];
 	i2c_master_transfer_t masterXfer;
 	status_t status;
 
-
-	if (isI2cInUse)
-	{
+	if (isI2cInUse) {
 #if defined(USING_EXTERNAL_DEBUGGER) && defined(DEBUG_I2C)
 		SEGGER_RTT_printf(0, "Clash in EEPROM_Read (2) with %d\n",isI2cInUse);
 #endif
@@ -180,19 +166,16 @@ bool EEPROM_Read(int address, uint8_t *buf, int size)
 
 	int timeoutCount = 50;
 	status = kStatus_Success;
-	do
-	{
-		if(status != kStatus_Success)
-		{
+	do {
+		if (status != kStatus_Success) {
 			vTaskDelay(portTICK_PERIOD_MS * 1);
 		}
 
 		status = I2C_MasterTransferBlocking(I2C0, &masterXfer);
 
-	}while((status != kStatus_Success) && (timeoutCount-- > 0));
+	} while ((status != kStatus_Success) && (timeoutCount-- > 0));
 
-	if (status != kStatus_Success)
-	{
+	if (status != kStatus_Success) {
 		isI2cInUse = 0;
 		taskEXIT_CRITICAL();
 		return false;
@@ -208,8 +191,7 @@ bool EEPROM_Read(int address, uint8_t *buf, int size)
 	masterXfer.flags = kI2C_TransferRepeatedStartFlag;
 
 	status = I2C_MasterTransferBlocking(I2C0, &masterXfer);
-	if (status != kStatus_Success)
-	{
+	if (status != kStatus_Success) {
 		isI2cInUse = 0;
 		taskEXIT_CRITICAL();
 		return false;

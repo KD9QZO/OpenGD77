@@ -9,8 +9,8 @@
 #define _OPENGD77_USB_DEVICE_DESCRIPTOR_H_
 
 /*******************************************************************************
-* Definitions
-******************************************************************************/
+ * Definitions
+ ******************************************************************************/
 #define USB_DEVICE_SPECIFIC_BCD_VERSION (0x0200)
 #define USB_DEVICE_DEMO_BCD_VERSION (0x0101U)
 
@@ -144,8 +144,8 @@
 #define USB_CDC_VCOM_DIC_PROTOCOL (USB_CDC_NO_CLASS_SPECIFIC_PROTOCOL)
 
 /*******************************************************************************
-* API
-******************************************************************************/
+ * API
+ ******************************************************************************/
 /*!
  * @brief USB device set speed function.
  *
@@ -174,8 +174,7 @@ extern usb_status_t USB_DeviceSetSpeed(usb_device_handle handle, uint8_t speed);
  *
  * @return A USB error code or kStatus_USB_Success.
  */
-extern usb_status_t USB_DeviceGetDeviceDescriptor(usb_device_handle handle,
-                                                  usb_device_get_device_descriptor_struct_t *deviceDescriptor);
+extern usb_status_t USB_DeviceGetDeviceDescriptor(usb_device_handle handle, usb_device_get_device_descriptor_struct_t *deviceDescriptor);
 /*!
  * @brief USB device get string descriptor function.
  *

@@ -89,9 +89,8 @@ typedef struct
 	uint8_t UnknownBlock7[2];
 } CalibrationBandData_t;
 
-typedef struct
-{
-     CalibrationBandData_t band[CalibrationBandMAX];
+typedef struct {
+	CalibrationBandData_t band[CalibrationBandMAX];
 } CalibrationData_t;
 
 
@@ -99,8 +98,7 @@ typedef struct
 static __attribute__((section(".data.$RAM2"))) CalibrationData_t calibrationData;
 
 
-bool calibrationInit(void)
-{
+bool calibrationInit(void) {
 	return (SPI_Flash_read(CALIBRATION_BASE, (uint8_t *)&calibrationData, CALIBRATION_TABLE_LENGTH));
 }
 

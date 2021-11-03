@@ -33,13 +33,10 @@ static int dBm = 0;
 static const int barX = 9;
 DECLARE_SMETER_ARRAY(rssiMeterBar, (DISPLAY_SIZE_X - (barX - 1)));
 
-
-menuStatus_t menuRSSIScreen(uiEvent_t *ev, bool isFirstRun)
-{
+menuStatus_t menuRSSIScreen(uiEvent_t *ev, bool isFirstRun) {
 	static uint32_t m = 0;
 
-	if (isFirstRun)
-	{
+	if (isFirstRun) {
 		//calibrationGetRSSIMeterParams(&rssiCalibration); // UNUSED
 		menuDataGlobal.endIndex = 0;
 		ucClearBuf();
@@ -47,17 +44,13 @@ menuStatus_t menuRSSIScreen(uiEvent_t *ev, bool isFirstRun)
 		ucRenderRows(0, 2);
 
 		updateScreen(true, true);
-	}
-	else
-	{
+	} else {
 		menuRSSIExitCode = MENU_STATUS_SUCCESS;
-		if (ev->hasEvent)
-		{
+		if (ev->hasEvent) {
 			handleEvent(ev);
 		}
 
-		if((ev->time - m) > RSSI_UPDATE_COUNTER_RELOAD)
-		{
+		if ((ev->time - m) > RSSI_UPDATE_COUNTER_RELOAD) {
 			m = ev->time;
 			updateScreen(false, false);
 		}
@@ -67,17 +60,13 @@ menuStatus_t menuRSSIScreen(uiEvent_t *ev, bool isFirstRun)
 }
 
 // Returns S-Unit 0..9..10(S9+10dB)..15(S9+60)
-static int32_t getSignalStrength(int dBm)
-{
-	if (dBm < DBM_LEVELS[1])
-	{
+static int32_t getSignalStrength(int dBm) {
+	if (dBm < DBM_LEVELS[1]) {
 		return 0;
 	}
 
-	for (int8_t i = 15; i >= 0; i--)
-	{
-		if (dBm >= DBM_LEVELS[i])
-		{
+	for (int8_t i = 15; i >= 0; i--) {
+		if (dBm >= DBM_LEVELS[i]) {
 			return i;
 		}
 	}
@@ -85,18 +74,15 @@ static int32_t getSignalStrength(int dBm)
 	return 0;
 }
 
-static void updateScreen(bool forceRedraw, bool isFirstRun)
-{
+static void updateScreen(bool forceRedraw, bool isFirstRun) {
 	char buffer[17];
 	int barWidth;
 
 	dBm = getRSSIdBm();
 	int rssi = dBm;
 
-	if (isFirstRun && (nonVolatileSettings.audioPromptMode >= AUDIO_PROMPT_MODE_VOICE_LEVEL_1))
-	{
-		if (voicePromptsIsPlaying())
-		{
+	if (isFirstRun && (nonVolatileSettings.audioPromptMode >= AUDIO_PROMPT_MODE_VOICE_LEVEL_1)) {
+		if (voicePromptsIsPlaying()) {
 			voicePromptsTerminate();
 		}
 		voicePromptsInit();
@@ -109,8 +95,7 @@ static void updateScreen(bool forceRedraw, bool isFirstRun)
 		updateVoicePrompts(false, true);
 	}
 
-	if (forceRedraw)
-	{
+	if (forceRedraw) {
 		// Clear whole drawing region
 		ucFillRect(0, 14, DISPLAY_SIZE_X, DISPLAY_SIZE_Y - 14, true);
 
@@ -119,30 +104,24 @@ static void updateScreen(bool forceRedraw, bool isFirstRun)
 		// Clear the right V line of the frame
 		ucDrawFastVLine((DISPLAY_SIZE_X - 1), (DISPLAY_Y_POS_RSSI_BAR - 1), (8 + 2), false);
 		// S9+xx H Dots
-		for (int16_t i = ((barX - 2) + (rssiMeterBar[9] * 2) + 1); i < DISPLAY_SIZE_X; i += 4)
-		{
+		for (int16_t i = ((barX - 2) + (rssiMeterBar[9] * 2) + 1); i < DISPLAY_SIZE_X; i += 4) {
 			ucDrawFastHLine(i, (DISPLAY_Y_POS_RSSI_BAR - 2), 2, false);
 		}
 		// +10..60dB
-		ucFillRect(((barX - 2) + (rssiMeterBar[9] * 2) + 2), (DISPLAY_Y_POS_RSSI_BAR + 8) + 2,
-				(DISPLAY_SIZE_X - ((barX - 2) + (rssiMeterBar[9] * 2) + 2)), 2, false);
+		ucFillRect(((barX - 2) + (rssiMeterBar[9] * 2) + 2), (DISPLAY_Y_POS_RSSI_BAR + 8) + 2, (DISPLAY_SIZE_X - ((barX - 2) + (rssiMeterBar[9] * 2) + 2)), 2, false);
 
 		// Draw S, Numbers and ticks
 		ucPrintAt(1, DISPLAY_Y_POS_RSSI_BAR, "S", FONT_SIZE_1_BOLD);
 
 		int xPos;
 		int currentMode = trxGetMode();
-		for (uint8_t i = 0; i < 10; i++)
-		{
+		for (uint8_t i = 0; i < 10; i++) {
 			// Scale the bar graph so values S0 - S9 take 70% of the scale width, and signals above S9 take the last 30%
 			// On DMR the max signal is S9+10, so teh entire bar can be the sale scale
 			// ON FM signals above S9, the scale is compressed to 2/5
-			if ((i <= 9) || (currentMode == RADIO_MODE_DIGITAL))
-			{
+			if ((i <= 9) || (currentMode == RADIO_MODE_DIGITAL)) {
 				xPos = rssiMeterBar[i];
-			}
-			else
-			{
+			} else {
 				xPos = ((rssiMeterBar[i] - rssiMeterBar[9]) / 5) + rssiMeterBar[9];
 			}
 			xPos *= 2;
@@ -150,8 +129,7 @@ static void updateScreen(bool forceRedraw, bool isFirstRun)
 			// V ticks
 			ucDrawFastVLine(((barX - 2) + xPos), (DISPLAY_Y_POS_RSSI_BAR + 8) + 2, ((i % 2) ? 3 : 1), ((i < 10) ? true : false));
 
-			if ((i % 2) && (i < 10))
-			{
+			if ((i % 2) && (i < 10)) {
 				char buf[2];
 
 				sprintf(buf, "%d", i);
@@ -162,9 +140,7 @@ static void updateScreen(bool forceRedraw, bool isFirstRun)
 						, buf, FONT_SIZE_2);
 			}
 		}
-	}
-	else
-	{
+	} else {
 		// Clear dBm region value
 		ucFillRect(((DISPLAY_SIZE_X - (7 * 8)) >> 1), DISPLAY_Y_POS_RSSI_VALUE, (7 * 8), FONT_SIZE_3_HEIGHT, true);
 	}
@@ -178,8 +154,7 @@ static void updateScreen(bool forceRedraw, bool isFirstRun)
 	ucPrintCore((DISPLAY_SIZE_X - ((strlen(buffer) + 1) * 8)), DISPLAY_Y_POS_RSSI_VALUE, buffer, FONT_SIZE_2, TEXT_ALIGN_RIGHT, false);
 #endif
 
-	if ((rssi > SMETER_S9) && (trxGetMode() == RADIO_MODE_ANALOG))
-	{
+	if ((rssi > SMETER_S9) && (trxGetMode() == RADIO_MODE_ANALOG)) {
 		// In Analog mode, the max RSSI value from the hardware is over S9+60.
 		// So scale this to fit in the last 30% of the display
 		rssi = ((rssi - SMETER_S9) / 5) + SMETER_S9;
@@ -192,23 +167,18 @@ static void updateScreen(bool forceRedraw, bool isFirstRun)
 	barWidth = ((rssi * rssiMeterBarNumUnits) / rssiMeterBarDivider);
 	barWidth = CLAMP((barWidth - 1), 0, (DISPLAY_SIZE_X - barX));
 
-	if (barWidth)
-	{
+	if (barWidth) {
 		ucFillRect(barX, DISPLAY_Y_POS_RSSI_BAR, barWidth, 8, false);
 	}
 
 	// Clear the end of the bar area, if needed
-	if (barWidth < (DISPLAY_SIZE_X - barX))
-	{
+	if (barWidth < (DISPLAY_SIZE_X - barX)) {
 		ucFillRect(barX + barWidth, DISPLAY_Y_POS_RSSI_BAR, (DISPLAY_SIZE_X - barX) - barWidth, 8, true);
 	}
 
-	if (forceRedraw)
-	{
+	if (forceRedraw) {
 		ucRender();
-	}
-	else
-	{
+	} else {
 #if defined(PLATFORM_RD5R)
 		ucRenderRows((DISPLAY_Y_POS_RSSI_VALUE / 8), (DISPLAY_Y_POS_RSSI_VALUE / 8) + 3);
 #else
@@ -218,69 +188,53 @@ static void updateScreen(bool forceRedraw, bool isFirstRun)
 	}
 }
 
-static void handleEvent(uiEvent_t *ev)
-{
-	if (ev->events & BUTTON_EVENT)
-	{
+static void handleEvent(uiEvent_t *ev) {
+	if (ev->events & BUTTON_EVENT) {
 		bool wasPlaying = false;
 
-		if (BUTTONCHECK_SHORTUP(ev, BUTTON_SK1) && (ev->keys.key == 0))
-		{
+		if (BUTTONCHECK_SHORTUP(ev, BUTTON_SK1) && (ev->keys.key == 0)) {
 			// Stop playback or update signal strength
-			if ((wasPlaying = voicePromptsIsPlaying()) == false)
-			{
+			if ((wasPlaying = voicePromptsIsPlaying()) == false) {
 				updateVoicePrompts(true, false);
 			}
 		}
 
-		if (repeatVoicePromptOnSK1(ev))
-		{
-			if (wasPlaying && voicePromptsIsPlaying())
-			{
+		if (repeatVoicePromptOnSK1(ev)) {
+			if (wasPlaying && voicePromptsIsPlaying()) {
 				voicePromptsTerminate();
 			}
 			return;
 		}
 	}
 
-	if (KEYCHECK_SHORTUP(ev->keys, KEY_GREEN) || KEYCHECK_SHORTUP(ev->keys, KEY_RED))
-	{
+	if (KEYCHECK_SHORTUP(ev->keys, KEY_GREEN) || KEYCHECK_SHORTUP(ev->keys, KEY_RED)) {
 		menuSystemPopPreviousMenu();
 		return;
-	}
-	else if (KEYCHECK_SHORTUP_NUMBER(ev->keys)  && (BUTTONCHECK_DOWN(ev, BUTTON_SK2)))
-	{
+	} else if (KEYCHECK_SHORTUP_NUMBER(ev->keys) && (BUTTONCHECK_DOWN(ev, BUTTON_SK2))) {
 		saveQuickkeyMenuIndex(ev->keys.key, menuSystemGetCurrentMenuNumber(), 0, 0);
 		return;
 	}
 }
 
-static void updateVoicePrompts(bool flushIt, bool spellIt)
-{
-	if (nonVolatileSettings.audioPromptMode >= AUDIO_PROMPT_MODE_VOICE_LEVEL_1)
-	{
+static void updateVoicePrompts(bool flushIt, bool spellIt) {
+	if (nonVolatileSettings.audioPromptMode >= AUDIO_PROMPT_MODE_VOICE_LEVEL_1) {
 		uint8_t S = getSignalStrength(dBm);
 
-		if (flushIt)
-		{
+		if (flushIt) {
 			voicePromptsInit();
 		}
 
 		voicePromptsAppendPrompt(PROMPT_S);
 		voicePromptsAppendPrompt(PROMPT_SILENCE);
-		if (S > 9)
-		{
+		if (S > 9) {
 			voicePromptsAppendPrompt(PROMPT_9);
 			voicePromptsAppendPrompt(PROMPT_PLUS);
 			voicePromptsAppendInteger(10 * ((S - 10) + 1));
-		}
-		else
-		{
+		} else {
 			voicePromptsAppendPrompt(PROMPT_0 + S);
 		}
 
-		if (spellIt)
-		{
+		if (spellIt) {
 			promptsPlayNotAfterTx();
 		}
 	}

@@ -26,13 +26,13 @@
 #include "functions/ticks.h"
 #include "functions/rxPowerSaving.h"
 
-static const int STORAGE_BASE_ADDRESS 		= 0x6000;
-static const int STORAGE_MAGIC_NUMBER 		= 0x475C; // NOTE: never use 0xDEADBEEF, it's reserved value
+static const int STORAGE_BASE_ADDRESS = 0x6000;
+static const int STORAGE_MAGIC_NUMBER = 0x475C;  // NOTE: never use 0xDEADBEEF, it's reserved value
 
 // Bit patterns for DMR Beep
-const uint8_t BEEP_TX_NONE  = 0x00;
+const uint8_t BEEP_TX_NONE = 0x00;
 const uint8_t BEEP_TX_START = 0x01;
-const uint8_t BEEP_TX_STOP  = 0x02;
+const uint8_t BEEP_TX_STOP = 0x02;
 
 #if defined(PLATFORM_RD5R)
 static uint32_t dirtyTime = 0;
@@ -45,19 +45,17 @@ struct_codeplugChannel_t *currentChannelData;
 struct_codeplugChannel_t channelScreenChannelData = { .rxFreq = 0 };
 struct_codeplugContact_t contactListContactData;
 struct_codeplugDTMFContact_t contactListDTMFContactData;
-struct_codeplugChannel_t settingsVFOChannel[2];// VFO A and VFO B from the codeplug.
+struct_codeplugChannel_t settingsVFOChannel[2];  // VFO A and VFO B from the codeplug.
 int settingsUsbMode = USB_MODE_CPS;
 
-int *nextKeyBeepMelody = (int *)MELODY_KEY_BEEP;
+int *nextKeyBeepMelody = (int*)MELODY_KEY_BEEP;
 struct_codeplugGeneralSettings_t settingsCodeplugGeneralSettings;
 
-monitorModeSettingsStruct_t monitorModeData = {.isEnabled = false};
+monitorModeSettingsStruct_t monitorModeData = { .isEnabled = false };
 const int ECO_LEVEL_MAX = 4;
 
-bool settingsSaveSettings(bool includeVFOs)
-{
-	if (includeVFOs)
-	{
+bool settingsSaveSettings(bool includeVFOs) {
+	if (includeVFOs) {
 		codeplugSetVFO_ChannelData(&settingsVFOChannel[CHANNEL_VFO_A], CHANNEL_VFO_A);
 		codeplugSetVFO_ChannelData(&settingsVFOChannel[CHANNEL_VFO_B], CHANNEL_VFO_B);
 		settingsVFODirty = false;
@@ -68,26 +66,22 @@ bool settingsSaveSettings(bool includeVFOs)
 	nonVolatileSettings.audioPromptMode = AUDIO_PROMPT_MODE_VOICE_LEVEL_3;
 #endif
 
-	bool ret = EEPROM_Write(STORAGE_BASE_ADDRESS, (uint8_t *)&nonVolatileSettings, sizeof(settingsStruct_t));
+	bool ret = EEPROM_Write(STORAGE_BASE_ADDRESS, (uint8_t*)&nonVolatileSettings, sizeof(settingsStruct_t));
 
-	if (ret)
-	{
+	if (ret) {
 		settingsDirty = false;
 	}
 
 	return ret;
 }
 
-bool settingsLoadSettings(void)
-{
+bool settingsLoadSettings(void) {
 	bool hasRestoredDefaultsettings = false;
-	if (!EEPROM_Read(STORAGE_BASE_ADDRESS, (uint8_t *)&nonVolatileSettings, sizeof(settingsStruct_t)))
-	{
-		nonVolatileSettings.magicNumber = 0;// flag settings could not be loaded
+	if (!EEPROM_Read(STORAGE_BASE_ADDRESS, (uint8_t*)&nonVolatileSettings, sizeof(settingsStruct_t))) {
+		nonVolatileSettings.magicNumber = 0;  // flag settings could not be loaded
 	}
 
-	if (nonVolatileSettings.magicNumber != STORAGE_MAGIC_NUMBER)
-	{
+	if (nonVolatileSettings.magicNumber != STORAGE_MAGIC_NUMBER) {
 		settingsRestoreDefaultSettings();
 		hasRestoredDefaultsettings = true;
 	}
@@ -100,48 +94,34 @@ bool settingsLoadSettings(void)
 	codeplugGetVFO_ChannelData(&settingsVFOChannel[CHANNEL_VFO_A], CHANNEL_VFO_A);
 	codeplugGetVFO_ChannelData(&settingsVFOChannel[CHANNEL_VFO_B], CHANNEL_VFO_B);
 	/* 2020.10.27  vk3kyy. This should not be necessary as the rest of the fimware e.g. on the VFO screen and in the contact lookup handles when Rx Group and / or Contact is set to none
-	settingsInitVFOChannel(0);// clean up any problems with VFO data
-	settingsInitVFOChannel(1);
-	*/
+	 settingsInitVFOChannel(0);// clean up any problems with VFO data
+	 settingsInitVFOChannel(1);
+	 */
 
 	trxDMRID = codeplugGetUserDMRID();
-	struct_codeplugDeviceInfo_t tmpDeviceInfoBuffer;// Temporary buffer to load the data including the CPS user band limits
-	if (codeplugGetDeviceInfo(&tmpDeviceInfoBuffer))
-	{
+	struct_codeplugDeviceInfo_t tmpDeviceInfoBuffer;  // Temporary buffer to load the data including the CPS user band limits
+	if (codeplugGetDeviceInfo(&tmpDeviceInfoBuffer)) {
 		// Validate CPS band limit data
-		if (	(tmpDeviceInfoBuffer.minVHFFreq < tmpDeviceInfoBuffer.maxVHFFreq) &&
-				(tmpDeviceInfoBuffer.minUHFFreq > tmpDeviceInfoBuffer.maxVHFFreq) &&
-				(tmpDeviceInfoBuffer.minUHFFreq < tmpDeviceInfoBuffer.maxUHFFreq) &&
-				((tmpDeviceInfoBuffer.minVHFFreq * 100000) >= RADIO_HARDWARE_FREQUENCY_BANDS[RADIO_BAND_VHF].minFreq) &&
-				((tmpDeviceInfoBuffer.minVHFFreq * 100000) <= RADIO_HARDWARE_FREQUENCY_BANDS[RADIO_BAND_VHF].maxFreq) &&
+		if ((tmpDeviceInfoBuffer.minVHFFreq < tmpDeviceInfoBuffer.maxVHFFreq) && (tmpDeviceInfoBuffer.minUHFFreq > tmpDeviceInfoBuffer.maxVHFFreq) && (tmpDeviceInfoBuffer.minUHFFreq < tmpDeviceInfoBuffer.maxUHFFreq) && ((tmpDeviceInfoBuffer.minVHFFreq * 100000) >= RADIO_HARDWARE_FREQUENCY_BANDS[RADIO_BAND_VHF].minFreq) && ((tmpDeviceInfoBuffer.minVHFFreq * 100000) <= RADIO_HARDWARE_FREQUENCY_BANDS[RADIO_BAND_VHF].maxFreq) &&
 
-				((tmpDeviceInfoBuffer.maxVHFFreq * 100000) >= RADIO_HARDWARE_FREQUENCY_BANDS[RADIO_BAND_VHF].minFreq) &&
-				((tmpDeviceInfoBuffer.maxVHFFreq * 100000) <= RADIO_HARDWARE_FREQUENCY_BANDS[RADIO_BAND_VHF].maxFreq) &&
+		((tmpDeviceInfoBuffer.maxVHFFreq * 100000) >= RADIO_HARDWARE_FREQUENCY_BANDS[RADIO_BAND_VHF].minFreq) && ((tmpDeviceInfoBuffer.maxVHFFreq * 100000) <= RADIO_HARDWARE_FREQUENCY_BANDS[RADIO_BAND_VHF].maxFreq) &&
 
+		((tmpDeviceInfoBuffer.minUHFFreq * 100000) >= RADIO_HARDWARE_FREQUENCY_BANDS[RADIO_BAND_UHF].minFreq) && ((tmpDeviceInfoBuffer.minUHFFreq * 100000) <= RADIO_HARDWARE_FREQUENCY_BANDS[RADIO_BAND_UHF].maxFreq) &&
 
-				((tmpDeviceInfoBuffer.minUHFFreq * 100000) >= RADIO_HARDWARE_FREQUENCY_BANDS[RADIO_BAND_UHF].minFreq) &&
-				((tmpDeviceInfoBuffer.minUHFFreq * 100000) <= RADIO_HARDWARE_FREQUENCY_BANDS[RADIO_BAND_UHF].maxFreq) &&
-
-				((tmpDeviceInfoBuffer.maxUHFFreq * 100000) >= RADIO_HARDWARE_FREQUENCY_BANDS[RADIO_BAND_UHF].minFreq) &&
-				((tmpDeviceInfoBuffer.maxUHFFreq * 100000) <= RADIO_HARDWARE_FREQUENCY_BANDS[RADIO_BAND_UHF].maxFreq)
-			)
-		{
+		((tmpDeviceInfoBuffer.maxUHFFreq * 100000) >= RADIO_HARDWARE_FREQUENCY_BANDS[RADIO_BAND_UHF].minFreq) && ((tmpDeviceInfoBuffer.maxUHFFreq * 100000) <= RADIO_HARDWARE_FREQUENCY_BANDS[RADIO_BAND_UHF].maxFreq)) {
 			// Only use it, if EVERYTHING is OK.
-			USER_FREQUENCY_BANDS[RADIO_BAND_VHF].minFreq = tmpDeviceInfoBuffer.minVHFFreq * 100000;// value needs to be in 10s of Hz;
-			USER_FREQUENCY_BANDS[RADIO_BAND_VHF].maxFreq = tmpDeviceInfoBuffer.maxVHFFreq * 100000;// value needs to be in 10s of Hz;
-			USER_FREQUENCY_BANDS[RADIO_BAND_UHF].minFreq = tmpDeviceInfoBuffer.minUHFFreq * 100000;// value needs to be in 10s of Hz;
-			USER_FREQUENCY_BANDS[RADIO_BAND_UHF].maxFreq = tmpDeviceInfoBuffer.maxUHFFreq * 100000;// value needs to be in 10s of Hz;
+			USER_FREQUENCY_BANDS[RADIO_BAND_VHF].minFreq = tmpDeviceInfoBuffer.minVHFFreq * 100000;  // value needs to be in 10s of Hz;
+			USER_FREQUENCY_BANDS[RADIO_BAND_VHF].maxFreq = tmpDeviceInfoBuffer.maxVHFFreq * 100000;  // value needs to be in 10s of Hz;
+			USER_FREQUENCY_BANDS[RADIO_BAND_UHF].minFreq = tmpDeviceInfoBuffer.minUHFFreq * 100000;  // value needs to be in 10s of Hz;
+			USER_FREQUENCY_BANDS[RADIO_BAND_UHF].maxFreq = tmpDeviceInfoBuffer.maxUHFFreq * 100000;  // value needs to be in 10s of Hz;
 		}
 	}
 	//codeplugGetGeneralSettings(&settingsCodeplugGeneralSettings);
 
-	if (nonVolatileSettings.languageIndex >= NUM_LANGUAGES)
-	{
-		nonVolatileSettings.languageIndex = 0U; // Reset to English
+	if (nonVolatileSettings.languageIndex >= NUM_LANGUAGES) {
+		nonVolatileSettings.languageIndex = 0U;  // Reset to English
 		settingsSetDirty();
-	}
-	else
-	{
+	} else {
 		settingsDirty = false;
 	}
 
@@ -151,7 +131,7 @@ bool settingsLoadSettings(void)
 
 	trxSetAnalogFilterLevel(nonVolatileSettings.analogFilterLevel);
 
-	codeplugInitChannelsPerZone();// Initialise the codeplug channels per zone
+	codeplugInitChannelsPerZone();  // Initialise the codeplug channels per zone
 
 	settingsVFODirty = false;
 
@@ -160,23 +140,19 @@ bool settingsLoadSettings(void)
 	return hasRestoredDefaultsettings;
 }
 
-void settingsInitVFOChannel(int vfoNumber)
-{
+void settingsInitVFOChannel(int vfoNumber) {
 	// temporary hack in case the code plug has no RxGroup selected
 	// The TG needs to come from the RxGroupList
-	if (settingsVFOChannel[vfoNumber].rxGroupList == 0)
-	{
+	if (settingsVFOChannel[vfoNumber].rxGroupList == 0) {
 		settingsVFOChannel[vfoNumber].rxGroupList = 1;
 	}
 
-	if (settingsVFOChannel[vfoNumber].contact == 0)
-	{
+	if (settingsVFOChannel[vfoNumber].contact == 0) {
 		settingsVFOChannel[vfoNumber].contact = 1;
 	}
 }
 
-void settingsRestoreDefaultSettings(void)
-{
+void settingsRestoreDefaultSettings(void) {
 	nonVolatileSettings.magicNumber = STORAGE_MAGIC_NUMBER;
 	nonVolatileSettings.currentChannelIndexInZone = 0;
 	nonVolatileSettings.currentChannelIndexInAllZone = 1;
@@ -190,14 +166,14 @@ void settingsRestoreDefaultSettings(void)
 #else
 			BACKLIGHT_MODE_AUTO;
 #endif
-	nonVolatileSettings.backLightTimeout = 0U;//0 = never timeout. 1 - 255 time in seconds
+	nonVolatileSettings.backLightTimeout = 0U;	//0 = never timeout. 1 - 255 time in seconds
 	nonVolatileSettings.displayContrast =
 #if defined(PLATFORM_DM1801)
 			0x0e; // 14
 #elif defined (PLATFORM_RD5R)
 			0x06;
 #else
-			0x12; // 18
+			0x12;  // 18
 #endif
 	nonVolatileSettings.initialMenuNumber =
 #if defined(PLATFORM_GD77S)
@@ -205,35 +181,35 @@ void settingsRestoreDefaultSettings(void)
 #else
 			UI_VFO_MODE;
 #endif
-	nonVolatileSettings.displayBacklightPercentage = 100;// 100% brightness
-	nonVolatileSettings.displayBacklightPercentageOff = 0;// 0% brightness
+	nonVolatileSettings.displayBacklightPercentage = 100;  // 100% brightness
+	nonVolatileSettings.displayBacklightPercentageOff = 0;  // 0% brightness
 	nonVolatileSettings.extendedInfosOnScreen = INFO_ON_SCREEN_OFF;
 	nonVolatileSettings.txFreqLimited =
 #if defined(PLATFORM_GD77S)
 			BAND_LIMITS_NONE;//GD-77S is channelised, and there is no way to disable band limits from the UI, so disable limits by default.
 #else
-			BAND_LIMITS_ON_LEGACY_DEFAULT;// Limit Tx frequency to US Amateur bands
+			BAND_LIMITS_ON_LEGACY_DEFAULT;  // Limit Tx frequency to US Amateur bands
 #endif
 	nonVolatileSettings.txPowerLevel =
 #if defined(PLATFORM_GD77S)
 			3U; // 750mW
 #else
-			4U; // 1 W   3:750  2:500  1:250
+			4U;  // 1 W   3:750  2:500  1:250
 #endif
 
-	nonVolatileSettings.userPower = 4100U;// Max DAC value is 4095. 4100 is a hack to make the numbers more palatable.
+	nonVolatileSettings.userPower = 4100U;  // Max DAC value is 4095. 4100 is a hack to make the numbers more palatable.
 	nonVolatileSettings.bitfieldOptions =
 #if defined(PLATFORM_GD77S)
 			0U;
 #else
-			BIT_SETTINGS_UPDATED; // we need to keep track if the user has been notified about settings update.
+			BIT_SETTINGS_UPDATED;  // we need to keep track if the user has been notified about settings update.
 #endif
-	nonVolatileSettings.overrideTG = 0U;// 0 = No override
+	nonVolatileSettings.overrideTG = 0U;  // 0 = No override
 	nonVolatileSettings.txTimeoutBeepX5Secs = 2U;
-	nonVolatileSettings.beepVolumeDivider = 4U; //-6dB: Beeps are way too loud using the same setting as the official firmware
-	nonVolatileSettings.micGainDMR = 11U; // Normal value used by the official firmware
-	nonVolatileSettings.micGainFM = 17U; // Default (from all of my cals, datasheet default: 16)
-	nonVolatileSettings.tsManualOverride = 0U; // No manual TS override using the Star key
+	nonVolatileSettings.beepVolumeDivider = 4U;  //-6dB: Beeps are way too loud using the same setting as the official firmware
+	nonVolatileSettings.micGainDMR = 11U;  // Normal value used by the official firmware
+	nonVolatileSettings.micGainFM = 17U;  // Default (from all of my cals, datasheet default: 16)
+	nonVolatileSettings.tsManualOverride = 0U;  // No manual TS override using the Star key
 	nonVolatileSettings.keypadTimerLong = 5U;
 	nonVolatileSettings.keypadTimerRepeat = 3U;
 	nonVolatileSettings.currentVFONumber = CHANNEL_VFO_A;
@@ -241,20 +217,20 @@ void settingsRestoreDefaultSettings(void)
 #if defined(PLATFORM_GD77S)
 	DMR_DESTINATION_FILTER_TG;
 #else
-	DMR_DESTINATION_FILTER_NONE;
+			DMR_DESTINATION_FILTER_NONE;
 #endif
 	nonVolatileSettings.dmrCcTsFilter = DMR_CCTS_FILTER_CC_TS;
 
-	nonVolatileSettings.dmrCaptureTimeout = 10U;// Default to holding 10 seconds after a call ends
+	nonVolatileSettings.dmrCaptureTimeout = 10U;  // Default to holding 10 seconds after a call ends
 	nonVolatileSettings.analogFilterLevel = ANALOG_FILTER_CSS;
 	trxSetAnalogFilterLevel(nonVolatileSettings.analogFilterLevel);
 	nonVolatileSettings.languageIndex = 0U;
-	nonVolatileSettings.scanDelay = 5U;// 5 seconds
-	nonVolatileSettings.scanStepTime = 0;// 30ms
+	nonVolatileSettings.scanDelay = 5U;  // 5 seconds
+	nonVolatileSettings.scanStepTime = 0;  // 30ms
 	nonVolatileSettings.scanModePause = SCAN_MODE_HOLD;
-	nonVolatileSettings.squelchDefaults[RADIO_BAND_VHF]		= 10U;// 1 - 21 = 0 - 100% , same as from the CPS variable squelch
-	nonVolatileSettings.squelchDefaults[RADIO_BAND_220MHz]	= 10U;// 1 - 21 = 0 - 100% , same as from the CPS variable squelch
-	nonVolatileSettings.squelchDefaults[RADIO_BAND_UHF]		= 10U;// 1 - 21 = 0 - 100% , same as from the CPS variable squelch
+	nonVolatileSettings.squelchDefaults[RADIO_BAND_VHF] = 10U;  // 1 - 21 = 0 - 100% , same as from the CPS variable squelch
+	nonVolatileSettings.squelchDefaults[RADIO_BAND_220MHz] = 10U;  // 1 - 21 = 0 - 100% , same as from the CPS variable squelch
+	nonVolatileSettings.squelchDefaults[RADIO_BAND_UHF] = 10U;  // 1 - 21 = 0 - 100% , same as from the CPS variable squelch
 	nonVolatileSettings.hotspotType =
 #if defined(PLATFORM_GD77S)
 			HOTSPOT_TYPE_MMDVM;
@@ -268,7 +244,7 @@ void settingsRestoreDefaultSettings(void)
 			ALLOW_PRIVATE_CALLS_ON;
 #endif
 
-    // Set all these value to zero to force the operator to set their own limits.
+	// Set all these value to zero to force the operator to set their own limits.
 	nonVolatileSettings.vfoScanLow[CHANNEL_VFO_A] = 0U;
 	nonVolatileSettings.vfoScanLow[CHANNEL_VFO_B] = 0U;
 	nonVolatileSettings.vfoScanHigh[CHANNEL_VFO_A] = 0U;
@@ -279,17 +255,14 @@ void settingsRestoreDefaultSettings(void)
 	nonVolatileSettings.beepOptions = BEEP_TX_STOP | BEEP_TX_START;
 	// VOX related
 	nonVolatileSettings.voxThreshold = 20U;
-	nonVolatileSettings.voxTailUnits = 4U; // 2 seconds tail
+	nonVolatileSettings.voxTailUnits = 4U;  // 2 seconds tail
 
 #if defined(PLATFORM_GD77S)
 	nonVolatileSettings.audioPromptMode = AUDIO_PROMPT_MODE_VOICE_LEVEL_3;
 #else
-	if (voicePromptDataIsLoaded)
-	{
+	if (voicePromptDataIsLoaded) {
 		nonVolatileSettings.audioPromptMode = AUDIO_PROMPT_MODE_VOICE_LEVEL_1;
-	}
-	else
-	{
+	} else {
 		nonVolatileSettings.audioPromptMode = AUDIO_PROMPT_MODE_BEEP;
 	}
 #endif
@@ -298,17 +271,15 @@ void settingsRestoreDefaultSettings(void)
 
 	nonVolatileSettings.ecoLevel = 1;
 
-	currentChannelData = &settingsVFOChannel[nonVolatileSettings.currentVFONumber];// Set the current channel data to point to the VFO data since the default screen will be the VFO
+	currentChannelData = &settingsVFOChannel[nonVolatileSettings.currentVFONumber];  // Set the current channel data to point to the VFO data since the default screen will be the VFO
 
 	settingsDirty = true;
 
 	settingsSaveSettings(false);
 }
 
-void enableVoicePromptsIfLoaded(void)
-{
-	if (voicePromptDataIsLoaded)
-	{
+void enableVoicePromptsIfLoaded(void) {
+	if (voicePromptDataIsLoaded) {
 #if defined(PLATFORM_GD77S)
 		nonVolatileSettings.audioPromptMode = AUDIO_PROMPT_MODE_VOICE_LEVEL_3;
 #else
@@ -319,148 +290,122 @@ void enableVoicePromptsIfLoaded(void)
 	}
 }
 
-void settingsEraseCustomContent(void)
-{
+void settingsEraseCustomContent(void) {
 	//Erase OpenGD77 custom content
-	SPI_Flash_eraseSector(0);// The first sector (4k) contains the OpenGD77 custom codeplug content e.g. Boot melody and boot image.
+	SPI_Flash_eraseSector(0);  // The first sector (4k) contains the OpenGD77 custom codeplug content e.g. Boot melody and boot image.
 }
 
 // --- Helpers ---
-void settingsSetBOOL(bool *s, bool v)
-{
+void settingsSetBOOL(bool *s, bool v) {
 	*s = v;
 	settingsSetDirty();
 }
 
-void settingsSetINT8(int8_t *s, int8_t v)
-{
+void settingsSetINT8(int8_t *s, int8_t v) {
 	*s = v;
 	settingsSetDirty();
 }
 
-void settingsSetUINT8(uint8_t *s, uint8_t v)
-{
+void settingsSetUINT8(uint8_t *s, uint8_t v) {
 	*s = v;
 	settingsSetDirty();
 }
 
-void settingsSetINT16(int16_t *s, int16_t v)
-{
+void settingsSetINT16(int16_t *s, int16_t v) {
 	*s = v;
 	settingsSetDirty();
 }
 
-void settingsSetUINT16(uint16_t *s, uint16_t v)
-{
+void settingsSetUINT16(uint16_t *s, uint16_t v) {
 	*s = v;
 	settingsSetDirty();
 }
 
-void settingsSetINT32(int32_t *s, int32_t v)
-{
+void settingsSetINT32(int32_t *s, int32_t v) {
 	*s = v;
 	settingsSetDirty();
 }
 
-void settingsSetUINT32(uint32_t *s, uint32_t v)
-{
+void settingsSetUINT32(uint32_t *s, uint32_t v) {
 	*s = v;
 	settingsSetDirty();
 }
 
-void settingsIncINT8(int8_t *s, int8_t v)
-{
+void settingsIncINT8(int8_t *s, int8_t v) {
 	*s = *s + v;
 	settingsSetDirty();
 }
 
-void settingsIncUINT8(uint8_t *s, uint8_t v)
-{
+void settingsIncUINT8(uint8_t *s, uint8_t v) {
 	*s = *s + v;
 	settingsSetDirty();
 }
 
-void settingsIncINT16(int16_t *s, int16_t v)
-{
+void settingsIncINT16(int16_t *s, int16_t v) {
 	*s = *s + v;
 	settingsSetDirty();
 }
 
-void settingsIncUINT16(uint16_t *s, uint16_t v)
-{
+void settingsIncUINT16(uint16_t *s, uint16_t v) {
 	*s = *s + v;
 	settingsSetDirty();
 }
 
-void settingsIncINT32(int32_t *s, int32_t v)
-{
+void settingsIncINT32(int32_t *s, int32_t v) {
 	*s = *s + v;
 	settingsSetDirty();
 }
 
-void settingsIncUINT32(uint32_t *s, uint32_t v)
-{
+void settingsIncUINT32(uint32_t *s, uint32_t v) {
 	*s = *s + v;
 	settingsSetDirty();
 }
 
-void settingsDecINT8(int8_t *s, int8_t v)
-{
+void settingsDecINT8(int8_t *s, int8_t v) {
 	*s = *s - v;
 	settingsSetDirty();
 }
 
-void settingsDecUINT8(uint8_t *s, uint8_t v)
-{
+void settingsDecUINT8(uint8_t *s, uint8_t v) {
 	*s = *s - v;
 	settingsSetDirty();
 }
 
-void settingsDecINT16(int16_t *s, int16_t v)
-{
+void settingsDecINT16(int16_t *s, int16_t v) {
 	*s = *s - v;
 	settingsSetDirty();
 }
 
-void settingsDecUINT16(uint16_t *s, uint16_t v)
-{
+void settingsDecUINT16(uint16_t *s, uint16_t v) {
 	*s = *s - v;
 	settingsSetDirty();
 }
 
-void settingsDecINT32(int32_t *s, int32_t v)
-{
+void settingsDecINT32(int32_t *s, int32_t v) {
 	*s = *s - v;
 	settingsSetDirty();
 }
 
-void settingsDecUINT32(uint32_t *s, uint32_t v)
-{
+void settingsDecUINT32(uint32_t *s, uint32_t v) {
 	*s = *s - v;
 	settingsSetDirty();
 }
 // --- End of Helpers ---
 
-void settingsSetOptionBit(bitfieldOptions_t bit, bool set)
-{
-	if (set)
-	{
+void settingsSetOptionBit(bitfieldOptions_t bit, bool set) {
+	if (set) {
 		nonVolatileSettings.bitfieldOptions |= bit;
-	}
-	else
-	{
+	} else {
 		nonVolatileSettings.bitfieldOptions &= ~bit;
 	}
 	settingsSetDirty();
 }
 
-bool settingsIsOptionBitSet(bitfieldOptions_t bit)
-{
+bool settingsIsOptionBitSet(bitfieldOptions_t bit) {
 	return ((nonVolatileSettings.bitfieldOptions & bit) == (bit));
 }
 
-void settingsSetDirty(void)
-{
+void settingsSetDirty(void) {
 	settingsDirty = true;
 
 #if defined(PLATFORM_RD5R)
@@ -468,8 +413,7 @@ void settingsSetDirty(void)
 #endif
 }
 
-void settingsSetVFODirty(void)
-{
+void settingsSetVFODirty(void) {
 	settingsVFODirty = true;
 
 #if defined(PLATFORM_RD5R)
@@ -477,8 +421,7 @@ void settingsSetVFODirty(void)
 #endif
 }
 
-void settingsSaveIfNeeded(bool immediately)
-{
+void settingsSaveIfNeeded(bool immediately) {
 #if defined(PLATFORM_RD5R)
 	const int DIRTY_DURTION_MILLISECS = 500;
 
@@ -492,7 +435,6 @@ void settingsSaveIfNeeded(bool immediately)
 #endif
 }
 
-int settingsGetScanStepTimeMilliseconds(void)
-{
+int settingsGetScanStepTimeMilliseconds(void) {
 	return TIMESLOT_DURATION + (nonVolatileSettings.scanStepTime * TIMESLOT_DURATION);
 }

@@ -15,8 +15,10 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-#ifndef _OPENGD77_MENUSYSTEM_H_
-#define _OPENGD77_MENUSYSTEM_H_
+
+#ifndef OPENGD77_MENUSYSTEM_H_
+#define OPENGD77_MENUSYSTEM_H_
+
 
 #include "main.h"
 #include "user_interface/uiGlobals.h"
@@ -236,34 +238,34 @@ enum MENU_SCREENS
 #define QUICKKEY_MENULONGVALUE(m, e)  ((QUICKKEY_MENU << 15) | ((m & 0x1f) << 10) | (e & 0x1ff))
 #define QUICKKEY_CONTACTVALUE(c)      (c)
 
-enum QUICK_FUNCTIONS {  FUNC_START_SCANNING = QUICKKEY_MENUVALUE(0, 0, 1),
-						FUNC_RIGHT = 0x11,
-						FUNC_LEFT = 0x12,
-						FUNC_TOGGLE_TORCH = QUICKKEY_MENUVALUE(0, 0, 2),
-						FUNC_REDRAW = QUICKKEY_MENUVALUE(0, 0, 3)
+enum QUICK_FUNCTIONS {
+	FUNC_START_SCANNING = QUICKKEY_MENUVALUE(0, 0, 1),
+	FUNC_RIGHT = 0x11,
+	FUNC_LEFT = 0x12,
+	FUNC_TOGGLE_TORCH = QUICKKEY_MENUVALUE(0, 0, 2),
+	FUNC_REDRAW = QUICKKEY_MENUVALUE(0, 0, 3)
 };
 
 // This is used to store current position in menus. The system keeps track of its value, e.g entering in
 // a submenu, it will be restored exiting that submenu. It's up to the menuFunction() to override its
 // value when isFirstRun == true.
 
-typedef struct
-{
-	int 					currentItemIndex;
-	int 					startIndex;
-	int 					endIndex;
-	int 					lightTimer;
-	menuItemNewData_t		*currentMenuList;
-	menuControlDataStruct_t	controlData;
-	char					menuOptionsSetQuickkey;
-	int 					menuOptionsTimeout;
-	bool 					newOptionSelected;
-	const menuItemsList_t	*data[];
+typedef struct {
+	int currentItemIndex;
+	int startIndex;
+	int endIndex;
+	int lightTimer;
+	menuItemNewData_t *currentMenuList;
+	menuControlDataStruct_t controlData;
+	char menuOptionsSetQuickkey;
+	int menuOptionsTimeout;
+	bool newOptionSelected;
+	const menuItemsList_t *data[];
 } menuDataGlobal_t;
 
-extern menuDataGlobal_t 		menuDataGlobal;
-extern const menuItemsList_t 	menuDataMainMenu;
-extern const menuItemsList_t 	menuDataContact;
+extern menuDataGlobal_t menuDataGlobal;
+extern const menuItemsList_t menuDataMainMenu;
+extern const menuItemsList_t menuDataContact;
 
 menuStatus_t uiVFOMode(uiEvent_t *event, bool isFirstRun);
 menuStatus_t uiVFOModeQuickMenu(uiEvent_t *event, bool isFirstRun);
@@ -297,4 +299,4 @@ menuStatus_t menuPrivateCall(uiEvent_t *event, bool isFirstRun);
 menuStatus_t uiMessageBox(uiEvent_t *event, bool isFirstRun);
 
 
-#endif
+#endif	/* !OPENGD77_MENUSYSTEM_H_ */

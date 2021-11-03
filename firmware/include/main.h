@@ -16,8 +16,9 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#ifndef _OPENGD77_MAIN_H_
-#define _OPENGD77_MAIN_H_
+#ifndef OPENGD77_MAIN_H_
+#define OPENGD77_MAIN_H_
+
 
 #include <stdint.h>
 #include <stdio.h>
@@ -55,7 +56,9 @@
 #include "hardware/EEPROM.h"
 
 
+
 void mainTaskInit(void);
 void powerOffFinalStage(void);
 
-#endif /* _OPENGD77_MAIN_H_ */
+
+#endif	/* !OPENGD77_MAIN_H_ */

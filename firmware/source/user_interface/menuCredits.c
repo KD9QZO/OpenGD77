@@ -29,36 +29,39 @@ static const int NUM_LINES_PER_SCREEN = 4;
 static const int NUM_LINES_PER_SCREEN = 6;
 #endif
 
-static const int NUM_CREDITS = 7;
-static const char *creditTexts[] = {"Roger VK3KYY","Daniel F1RMB","Dzmitry EW1ADG","Colin G4EML","Alex DL4LEX","Kai DG4KLU","Jason VK7ZJA"};
+static const int NUM_CREDITS = 8;
+static const char *creditTexts[] = {
+	"Roger VK3KYY",
+	"Daniel F1RMB",
+	"Dzmitry EW1ADG",
+	"Colin G4EML",
+	"Alex DL4LEX",
+	"Kai DG4KLU",
+	"Jason VK7ZJA",
+	"Gerad KD9QZO"
+};
 
 static menuStatus_t menuCreditsExitCode = MENU_STATUS_SUCCESS;
 
-menuStatus_t menuCredits(uiEvent_t *ev, bool isFirstRun)
-{
-	if (isFirstRun)
-	{
+
+
+menuStatus_t menuCredits(uiEvent_t *ev, bool isFirstRun) {
+	if (isFirstRun) {
 		menuDataGlobal.endIndex = ((NUM_CREDITS >= NUM_LINES_PER_SCREEN) ? (NUM_CREDITS - NUM_LINES_PER_SCREEN) : (NUM_LINES_PER_SCREEN - NUM_CREDITS));
 		updateScreen(true);
-	}
-	else
-	{
+	} else {
 		menuCreditsExitCode = MENU_STATUS_SUCCESS;
-		if (ev->hasEvent)
-		{
+		if (ev->hasEvent) {
 			handleEvent(ev);
 		}
 	}
-	return menuCreditsExitCode;
+
+	return (menuCreditsExitCode);
 }
 
-static void updateScreen(bool isFirstRun)
-{
-
-	if (isFirstRun && (nonVolatileSettings.audioPromptMode >= AUDIO_PROMPT_MODE_VOICE_LEVEL_1))
-	{
-		if (voicePromptsIsPlaying())
-		{
+static void updateScreen(bool isFirstRun) {
+	if (isFirstRun && (nonVolatileSettings.audioPromptMode >= AUDIO_PROMPT_MODE_VOICE_LEVEL_1)) {
+		if (voicePromptsIsPlaying()) {
 			voicePromptsTerminate();
 		}
 		voicePromptsInit();
@@ -74,51 +77,38 @@ static void updateScreen(bool isFirstRun)
 	ucClearBuf();
 	menuDisplayTitle(currentLanguage->credits);
 
-
-	for(int i = 0; i < NUM_LINES_PER_SCREEN; i++)
-	{
+	for (int i = 0; i < NUM_LINES_PER_SCREEN; i++) {
 		ucPrintCentered(i * 8 + 16, (char *)creditTexts[i + menuDataGlobal.currentItemIndex], FONT_SIZE_1);
 	}
 
 	ucRender();
 }
 
-static void handleEvent(uiEvent_t *ev)
-{
-	if (ev->events & BUTTON_EVENT)
-	{
-		if (repeatVoicePromptOnSK1(ev))
-		{
+static void handleEvent(uiEvent_t *ev) {
+	if (ev->events & BUTTON_EVENT) {
+		if (repeatVoicePromptOnSK1(ev)) {
 			return;
 		}
 	}
 
-	if (KEYCHECK_SHORTUP(ev->keys, KEY_RED) || KEYCHECK_SHORTUP(ev->keys, KEY_GREEN))
-	{
+	if (KEYCHECK_SHORTUP(ev->keys, KEY_RED) || KEYCHECK_SHORTUP(ev->keys, KEY_GREEN)) {
 		menuSystemPopPreviousMenu();
 		return;
-	}
-	else if (KEYCHECK_PRESS(ev->keys, KEY_DOWN))
-	{
-		if (menuDataGlobal.currentItemIndex < ((NUM_CREDITS >= NUM_LINES_PER_SCREEN) ? (NUM_CREDITS - NUM_LINES_PER_SCREEN) : (NUM_LINES_PER_SCREEN - NUM_CREDITS)))
-		{
+	} else if (KEYCHECK_PRESS(ev->keys, KEY_DOWN)) {
+		if (menuDataGlobal.currentItemIndex < ((NUM_CREDITS >= NUM_LINES_PER_SCREEN) ? (NUM_CREDITS - NUM_LINES_PER_SCREEN) : (NUM_LINES_PER_SCREEN - NUM_CREDITS))) {
 			menuDataGlobal.currentItemIndex++;
 		}
 
 		updateScreen(false);
-	}
-	else if (KEYCHECK_PRESS(ev->keys, KEY_UP))
-	{
-		if (menuDataGlobal.currentItemIndex > 0)
-		{
+	} else if (KEYCHECK_PRESS(ev->keys, KEY_UP)) {
+		if (menuDataGlobal.currentItemIndex > 0) {
 			menuDataGlobal.currentItemIndex--;
 		}
 
 		updateScreen(false);
 	}
 
-	if (KEYCHECK_SHORTUP_NUMBER(ev->keys)  && (BUTTONCHECK_DOWN(ev, BUTTON_SK2)))
-	{
+	if (KEYCHECK_SHORTUP_NUMBER(ev->keys)  && (BUTTONCHECK_DOWN(ev, BUTTON_SK2))) {
 		saveQuickkeyMenuIndex(ev->keys.key, menuSystemGetCurrentMenuNumber(), 0, 0);
 		return;
 	}

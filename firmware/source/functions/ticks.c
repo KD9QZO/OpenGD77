@@ -17,70 +17,67 @@
  */
 
 #include <string.h>
+
 #include "functions/ticks.h"
+
 
 #define PIT_COUNTS_PER_MS  10U
 
+
 extern volatile uint32_t PITCounter;
-typedef struct
-{
-	timerCallback_t  funPtr;
-	uint32_t         PIT_TriggerTime;
+
+
+typedef struct {
+	timerCallback_t funPtr;
+	uint32_t PIT_TriggerTime;
 } timerCallbackbackStruct_t;
 
-#define MAX_NUM_TIMER_CALLBACKS 8
-timerCallbackbackStruct_t callbacksArray[MAX_NUM_TIMER_CALLBACKS];// As a global this will get cleared by the compiler
 
-uint32_t fw_millis(void)
-{
+#define MAX_NUM_TIMER_CALLBACKS 8
+
+
+timerCallbackbackStruct_t callbacksArray[MAX_NUM_TIMER_CALLBACKS];  // As a global this will get cleared by the compiler
+
+
+
+uint32_t fw_millis(void) {
 	return (PITCounter / PIT_COUNTS_PER_MS);
 }
 
-void handleTimerCallbacks(void)
-{
+void handleTimerCallbacks(void) {
 	int i = 0;
 
-	while((callbacksArray[i].funPtr != NULL) && (i < MAX_NUM_TIMER_CALLBACKS))
-	{
-		if (PITCounter > callbacksArray[i].PIT_TriggerTime)
-		{
-			callbacksArray[i].funPtr();// call the function
+	while ((callbacksArray[i].funPtr != NULL) && (i < MAX_NUM_TIMER_CALLBACKS)) {
+		if (PITCounter > callbacksArray[i].PIT_TriggerTime) {
+			callbacksArray[i].funPtr();  // call the function
 			memmove(&callbacksArray[i], &callbacksArray[i + 1], ((MAX_NUM_TIMER_CALLBACKS - 1) - i) * sizeof(timerCallbackbackStruct_t));
 			callbacksArray[MAX_NUM_TIMER_CALLBACKS - 1].funPtr = NULL;
-		}
-		else
-		{
+		} else {
 			i++;
 		}
 	}
 }
 
-bool addTimerCallback(timerCallback_t funPtr, uint32_t delayIn_mS, bool updateExistingCallbackTime)
-{
+bool addTimerCallback(timerCallback_t funPtr, uint32_t delayIn_mS, bool updateExistingCallbackTime) {
 	uint32_t callBackTime = PITCounter + (delayIn_mS * PIT_COUNTS_PER_MS);
 
-	for(int i = 0; i < MAX_NUM_TIMER_CALLBACKS; i++)
-	{
-		if (callbacksArray[i].funPtr == NULL)
-		{
+	for (int i = 0; i < MAX_NUM_TIMER_CALLBACKS; i++) {
+		if (callbacksArray[i].funPtr == NULL) {
 			callbacksArray[i].funPtr = funPtr;
 			callbacksArray[i].PIT_TriggerTime = callBackTime;
 			return true;
 		}
 
-		if ((callbacksArray[i].funPtr == funPtr) && updateExistingCallbackTime)
-		{
+		if ((callbacksArray[i].funPtr == funPtr) && updateExistingCallbackTime) {
 			callbacksArray[i].PIT_TriggerTime = callBackTime;
 			return true;
 		}
 
 		// callbacksArray[i] must be non-null pointer
-		if (callbacksArray[i].PIT_TriggerTime > callBackTime)
-		{
-			if (i != (MAX_NUM_TIMER_CALLBACKS - 1))
-			{
+		if (callbacksArray[i].PIT_TriggerTime > callBackTime) {
+			if (i != (MAX_NUM_TIMER_CALLBACKS - 1)) {
 				// shuffle all other callbacks down in the list if there is space
-				memmove(&callbacksArray[i+1], &callbacksArray[i], ((MAX_NUM_TIMER_CALLBACKS - 1) - i) * sizeof(timerCallbackbackStruct_t));
+				memmove(&callbacksArray[i + 1], &callbacksArray[i], ((MAX_NUM_TIMER_CALLBACKS - 1) - i) * sizeof(timerCallbackbackStruct_t));
 			}
 			callbacksArray[i].funPtr = funPtr;
 			callbacksArray[i].PIT_TriggerTime = callBackTime;

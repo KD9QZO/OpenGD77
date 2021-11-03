@@ -45,15 +45,11 @@ ANNOUNCE_STATIC void announceSquelchLevel(bool voicePromptWasPlaying);
 
 #endif
 
-typedef enum
-{
-	DIRECTION_NONE = 0U,
-	DIRECTION_TRANSMIT,
-	DIRECTION_RECEIVE
+typedef enum {
+	DIRECTION_NONE = 0U, DIRECTION_TRANSMIT, DIRECTION_RECEIVE
 } Direction_t;
 
-typedef enum
-{
+typedef enum {
 	PROMPT_SEQUENCE_CHANNEL_NAME_OR_VFO_FREQ_AND_MODE,
 	PROMPT_SEQUENCE_CHANNEL_NAME_AND_CONTACT_OR_VFO_FREQ_AND_MODE,
 	PROMPT_SEQUENCE_CHANNEL_NAME_OR_VFO_FREQ,
@@ -70,8 +66,7 @@ typedef enum
 	NUM_PROMPT_SEQUENCES
 } voicePromptItem_t;
 
-typedef enum
-{
+typedef enum {
 	DISPLAY_INFO_CONTACT_INVERTED = 0U,
 	DISPLAY_INFO_CONTACT,
 	DISPLAY_INFO_CONTACT_OVERRIDE_FRAME,
@@ -83,15 +78,12 @@ typedef enum
 	DISPLAY_INFO_ZONE
 } displayInformation_t;
 
-typedef struct
-{
-	uint32_t 			entries;
-	uint8_t  			contactLength;
-	int32_t  			slices[ID_SLICES]; // [0] is min availabel ID, [ID_SLICES - 1] is max available ID
-	uint32_t 			IDsPerSlice;
+typedef struct {
+	uint32_t entries;
+	uint8_t contactLength;
+	int32_t slices[ID_SLICES];  // [0] is min availabel ID, [ID_SLICES - 1] is max available ID
+	uint32_t IDsPerSlice;
 } dmrIDsCache_t;
-
-
 
 #define TS_NO_OVERRIDE  0
 void tsSetManualOverride(Channel_t chan, int8_t ts);
@@ -105,7 +97,7 @@ bool tsIsContactHasBeenOverriddenFromCurrentChannel(void);
 
 bool isQSODataAvailableForCurrentTalker(void);
 int alignFrequencyToStep(int freq, int step);
-char *chomp(char *str);
+char* chomp(char *str);
 int32_t getFirstSpacePos(char *str);
 void dmrIDCacheInit(void);
 bool dmrIDLookup(int targetId, dmrIdDataStruct_t *foundRecord);
@@ -113,7 +105,7 @@ bool contactIDLookup(uint32_t id, int calltype, char *buffer);
 void uiUtilityRenderQSOData(void);
 void uiUtilityRenderHeader(bool isVFODualWatchScanning);
 void uiUtilityRedrawHeaderOnly(bool isVFODualWatchScanning);
-LinkItem_t *lastheardFindInList(uint32_t id);
+LinkItem_t* lastheardFindInList(uint32_t id);
 void lastheardInitList(void);
 bool lastHeardListUpdate(uint8_t *dmrDataBuffer, bool forceOnHotspot);
 void lastHeardClearLastID(void);
@@ -128,7 +120,6 @@ uint16_t cssGetTone(int32_t index, CSSTypes_t type);
 int cssIndex(uint16_t tone, CSSTypes_t type);
 void cssIncrement(uint16_t *tone, int32_t *index, CSSTypes_t *type, bool loop, bool stayInCSSType);
 void cssDecrement(uint16_t *tone, int32_t *index, CSSTypes_t *type);
-
 
 size_t snprintDCS(char *s, size_t n, uint16_t code, bool inverted);
 

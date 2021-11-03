@@ -21,7 +21,12 @@
 #include "functions/settings.h"
 #include "functions/ticks.h"
 
-enum LOCK_STATE { LOCK_NONE = 0x00, LOCK_KEYPAD = 0x01, LOCK_PTT = 0x02, LOCK_BOTH = 0x03 };
+enum LOCK_STATE {
+	LOCK_NONE = 0x00,
+	LOCK_KEYPAD = 0x01,
+	LOCK_PTT = 0x02,
+	LOCK_BOTH = 0x03
+};
 
 static void updateScreen(bool update);
 static void handleEvent(uiEvent_t *ev);
@@ -30,30 +35,22 @@ static bool lockDisplayed = false;
 static const uint32_t TIMEOUT_MS = 500;
 static int lockState = LOCK_NONE;
 
-menuStatus_t menuLockScreen(uiEvent_t *ev, bool isFirstRun)
-{
+menuStatus_t menuLockScreen(uiEvent_t *ev, bool isFirstRun) {
 	static uint32_t m = 0;
 
-	if (isFirstRun)
-	{
+	if (isFirstRun) {
 		m = fw_millis();
 
 		updateScreen(lockDisplayed);
-	}
-	else
-	{
-		if ((lockDisplayed) && (
-				((nonVolatileSettings.audioPromptMode >= AUDIO_PROMPT_MODE_VOICE_LEVEL_1) && (voicePromptsIsPlaying() == false)) ||
-				((nonVolatileSettings.audioPromptMode <= AUDIO_PROMPT_MODE_BEEP) && ((ev->time - m) > TIMEOUT_MS))))
-		{
+	} else {
+		if ((lockDisplayed) && (((nonVolatileSettings.audioPromptMode >= AUDIO_PROMPT_MODE_VOICE_LEVEL_1) && (voicePromptsIsPlaying() == false)) || ((nonVolatileSettings.audioPromptMode <= AUDIO_PROMPT_MODE_BEEP) && ((ev->time - m) > TIMEOUT_MS)))) {
 			lockDisplayed = false;
 			menuSystemPopPreviousMenu();
 			return MENU_STATUS_SUCCESS;
 		}
 
-		if (ev->hasEvent)
-		{
-			m = fw_millis(); // reset timer on each key button/event.
+		if (ev->hasEvent) {
+			m = fw_millis();  // reset timer on each key button/event.
 
 			handleEvent(ev);
 		}
@@ -61,36 +58,28 @@ menuStatus_t menuLockScreen(uiEvent_t *ev, bool isFirstRun)
 	return MENU_STATUS_SUCCESS;
 }
 
-static void redrawScreen(bool update, bool state)
-{
-	if (update)
-	{
+static void redrawScreen(bool update, bool state) {
+	if (update) {
 		// Clear inner rect only
 		ucFillRoundRect(5, 3, 118, DISPLAY_SIZE_Y - 8, 5, false);
-	}
-	else
-	{
+	} else {
 		// Clear whole screen
 		ucClearBuf();
 		ucDrawRoundRectWithDropShadow(4, 4, 120, DISPLAY_SIZE_Y - 6, 5, true);
 	}
 
-	if (state)
-	{
+	if (state) {
 		int bufferLen = strlen(currentLanguage->keypad) + 3 + strlen(currentLanguage->ptt) + 1;
 		char buf[bufferLen];
 
 		memset(buf, 0, bufferLen);
 
-		if (keypadLocked)
-		{
+		if (keypadLocked) {
 			strcat(buf, currentLanguage->keypad);
 		}
 
-		if (PTTLocked)
-		{
-			if (keypadLocked)
-			{
+		if (PTTLocked) {
+			if (keypadLocked) {
 				strcat(buf, " & ");
 			}
 
@@ -114,14 +103,12 @@ static void redrawScreen(bool update, bool state)
 		voicePromptsInit();
 		voicePromptsAppendPrompt(PROMPT_SILENCE);
 
-		if (lockState & LOCK_KEYPAD)
-		{
+		if (lockState & LOCK_KEYPAD) {
 			voicePromptsAppendLanguageString(&currentLanguage->keypad);
 			voicePromptsAppendPrompt(PROMPT_SILENCE);
 		}
 
-		if (lockState & LOCK_PTT)
-		{
+		if (lockState & LOCK_PTT) {
 			voicePromptsAppendLanguageString(&currentLanguage->ptt);
 			voicePromptsAppendPrompt(PROMPT_SILENCE);
 		}
@@ -132,9 +119,7 @@ static void redrawScreen(bool update, bool state)
 		voicePromptsAppendLanguageString(&currentLanguage->to_unlock);
 		voicePromptsAppendPrompt(PROMPT_SILENCE);
 		voicePromptsPlay();
-	}
-	else
-	{
+	} else {
 		ucPrintCentered((DISPLAY_SIZE_Y - 16) / 2, currentLanguage->unlocked, FONT_SIZE_3);
 
 		voicePromptsInit();
@@ -148,80 +133,57 @@ static void redrawScreen(bool update, bool state)
 	lockDisplayed = true;
 }
 
-static void updateScreen(bool updateOnly)
-{
+static void updateScreen(bool updateOnly) {
 	bool keypadChanged = false;
 	bool PTTChanged = false;
 
-	if (keypadLocked)
-	{
-		if ((lockState & LOCK_KEYPAD) == 0)
-		{
+	if (keypadLocked) {
+		if ((lockState & LOCK_KEYPAD) == 0) {
 			keypadChanged = true;
 			lockState |= LOCK_KEYPAD;
 		}
-	}
-	else
-	{
-		if ((lockState & LOCK_KEYPAD))
-		{
+	} else {
+		if ((lockState & LOCK_KEYPAD)) {
 			keypadChanged = true;
 			lockState &= ~LOCK_KEYPAD;
 		}
 	}
 
-	if (PTTLocked)
-	{
-		if ((lockState & LOCK_PTT) == 0)
-		{
+	if (PTTLocked) {
+		if ((lockState & LOCK_PTT) == 0) {
 			PTTChanged = true;
 			lockState |= LOCK_PTT;
 		}
-	}
-	else
-	{
-		if ((lockState & LOCK_PTT))
-		{
+	} else {
+		if ((lockState & LOCK_PTT)) {
 			PTTChanged = true;
 			lockState &= ~LOCK_PTT;
 		}
 	}
 
-	if (updateOnly)
-	{
-		if (keypadChanged || PTTChanged)
-		{
+	if (updateOnly) {
+		if (keypadChanged || PTTChanged) {
 			redrawScreen(updateOnly, ((lockState & LOCK_KEYPAD) || (lockState & LOCK_PTT)));
-		}
-		else
-		{
-			if (lockDisplayed == false)
-			{
+		} else {
+			if (lockDisplayed == false) {
 				redrawScreen(updateOnly, false);
 			}
 		}
-	}
-	else
-	{
+	} else {
 		// Draw everything
 		redrawScreen(false, keypadLocked || PTTLocked);
 	}
 }
 
-static void handleEvent(uiEvent_t *ev)
-{
-	if (ev->events & BUTTON_EVENT)
-	{
-		if (repeatVoicePromptOnSK1(ev))
-		{
+static void handleEvent(uiEvent_t *ev) {
+	if (ev->events & BUTTON_EVENT) {
+		if (repeatVoicePromptOnSK1(ev)) {
 			return;
 		}
 	}
 
-	if (KEYCHECK_DOWN(ev->keys, KEY_STAR) && BUTTONCHECK_DOWN(ev, BUTTON_SK2))
-	{
-		if ((nonVolatileSettings.audioPromptMode >= AUDIO_PROMPT_MODE_VOICE_LEVEL_1) && voicePromptsIsPlaying())
-		{
+	if (KEYCHECK_DOWN(ev->keys, KEY_STAR) && BUTTONCHECK_DOWN(ev, BUTTON_SK2)) {
+		if ((nonVolatileSettings.audioPromptMode >= AUDIO_PROMPT_MODE_VOICE_LEVEL_1) && voicePromptsIsPlaying()) {
 			voicePromptsTerminate();
 		}
 
@@ -230,20 +192,16 @@ static void handleEvent(uiEvent_t *ev)
 		lockDisplayed = false;
 		menuSystemPopAllAndDisplayRootMenu();
 		menuSystemPushNewMenu(UI_LOCK_SCREEN);
-	}
-	else if ((nonVolatileSettings.audioPromptMode >= AUDIO_PROMPT_MODE_VOICE_LEVEL_1) && voicePromptsIsPlaying() && (ev->keys.key != 0) && (ev->keys.event & KEY_MOD_UP))
-	{
+	} else if ((nonVolatileSettings.audioPromptMode >= AUDIO_PROMPT_MODE_VOICE_LEVEL_1) && voicePromptsIsPlaying() && (ev->keys.key != 0) && (ev->keys.event & KEY_MOD_UP)) {
 		// Cancel the voice on any key event (that hides the lock screen earlier)
 		voicePromptsTerminate();
 	}
 }
 
-void menuLockScreenPop(void)
-{
+void menuLockScreenPop(void) {
 	lockDisplayed = false;
 
-	if (menuSystemGetCurrentMenuNumber() == UI_LOCK_SCREEN)
-	{
+	if (menuSystemGetCurrentMenuNumber() == UI_LOCK_SCREEN) {
 		menuSystemPopPreviousMenu();
 	}
 }

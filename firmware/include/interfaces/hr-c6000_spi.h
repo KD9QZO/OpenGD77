@@ -16,8 +16,8 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#ifndef _OPENGD77_SPI_H_
-#define _OPENGD77_SPI_H_
+#ifndef OPENGD77_SPI_H_
+#define OPENGD77_SPI_H_
 
 #include <FreeRTOS.h>
 #include <task.h>

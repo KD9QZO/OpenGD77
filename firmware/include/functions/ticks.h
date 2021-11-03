@@ -15,8 +15,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-#ifndef _OPENGD77_TICKS_H_
-#define _OPENGD77_TICKS_H_
+#ifndef OPENGD77_TICKS_H_
+#define OPENGD77_TICKS_H_
+
 
 #include <stdint.h>
 #include <stdio.h>
@@ -24,6 +25,8 @@
 
 #include <FreeRTOS.h>
 #include <task.h>
+
+
 
 typedef void (*timerCallback_t)(void);
 
