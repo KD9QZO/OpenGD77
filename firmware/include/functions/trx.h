@@ -24,42 +24,48 @@
 #include "functions/calibration.h"
 #include "functions/codeplug.h"
 
-typedef enum
-{
+typedef enum {
 	CSS_NONE = 0,
 	CSS_CTCSS,
 	CSS_DCS,
 	CSS_DCS_INVERTED
 } CSSTypes_t;
 
-typedef struct
-{
+typedef struct {
 	int calTableMinFreq;
 	int minFreq;
 	int maxFreq;
 } frequencyHardwareBand_t;
 
-typedef struct
-{
+typedef struct {
 	int minFreq;
 	int maxFreq;
 } frequencyBand_t;
 
-typedef struct trxFrequency
-{
+typedef struct trxFrequency {
 	int rxFreq;
 	int txFreq;
 } trxFrequency_t;
 
-enum RADIO_MODE { RADIO_MODE_NONE, RADIO_MODE_ANALOG, RADIO_MODE_DIGITAL };
-enum DMR_ADMIT_CRITERIA { ADMIT_CRITERIA_ALWAYS, ADMIT_CRITERIA_CHANNEL_FREE, ADMIT_CRITERIA_COLOR_CODE };
-enum DMR_MODE { DMR_MODE_AUTO, DMR_MODE_DMO, DMR_MODE_RMO, DMR_MODE_SFR };
-enum RADIO_FREQUENCY_BAND_NAMES { RADIO_BAND_VHF = 0, RADIO_BAND_220MHz, RADIO_BAND_UHF, RADIO_BANDS_TOTAL_NUM };
-enum TRX_FREQ_BAND { TRX_RX_FREQ_BAND = 0, TRX_TX_FREQ_BAND };
+enum RADIO_MODE {
+	RADIO_MODE_NONE, RADIO_MODE_ANALOG, RADIO_MODE_DIGITAL
+};
+enum DMR_ADMIT_CRITERIA {
+	ADMIT_CRITERIA_ALWAYS, ADMIT_CRITERIA_CHANNEL_FREE, ADMIT_CRITERIA_COLOR_CODE
+};
+enum DMR_MODE {
+	DMR_MODE_AUTO, DMR_MODE_DMO, DMR_MODE_RMO, DMR_MODE_SFR
+};
+enum RADIO_FREQUENCY_BAND_NAMES {
+	RADIO_BAND_VHF = 0, RADIO_BAND_220MHz, RADIO_BAND_UHF, RADIO_BANDS_TOTAL_NUM
+};
+enum TRX_FREQ_BAND {
+	TRX_RX_FREQ_BAND = 0, TRX_TX_FREQ_BAND
+};
 
-extern const frequencyHardwareBand_t 	RADIO_HARDWARE_FREQUENCY_BANDS[RADIO_BANDS_TOTAL_NUM];
-extern const frequencyBand_t			DEFAULT_USER_FREQUENCY_BANDS[RADIO_BANDS_TOTAL_NUM];
-extern frequencyBand_t					USER_FREQUENCY_BANDS[RADIO_BANDS_TOTAL_NUM];
+extern const frequencyHardwareBand_t RADIO_HARDWARE_FREQUENCY_BANDS[RADIO_BANDS_TOTAL_NUM];
+extern const frequencyBand_t DEFAULT_USER_FREQUENCY_BANDS[RADIO_BANDS_TOTAL_NUM];
+extern frequencyBand_t USER_FREQUENCY_BANDS[RADIO_BANDS_TOTAL_NUM];
 
 extern const uint8_t TRX_NUM_CTCSS;
 extern const uint16_t TRX_CTCSSTones[];
@@ -89,11 +95,11 @@ void I2C_AT1846_set_register_with_mask(uint8_t reg, uint16_t mask, uint16_t valu
 bool trxCarrierDetected(void);
 bool trxCheckDigitalSquelch(void);
 bool trxCheckAnalogSquelch(void);
-int	trxGetMode(void);
-int	trxGetBandwidthIs25kHz(void);
-int	trxGetFrequency(void);
+int trxGetMode(void);
+int trxGetBandwidthIs25kHz(void);
+int trxGetFrequency(void);
 void trxSetModeAndBandwidth(int mode, bool bandwidthIs25kHz);
-void trxSetFrequency(int fRx,int fTx, int dmrMode);
+void trxSetFrequency(int fRx, int fTx, int dmrMode);
 void trxSetRX(void);
 void trxSetTX(void);
 void trxAT1846RxOff(void);

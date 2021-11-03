@@ -16,13 +16,17 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-#ifndef _OPENGD77_UIGLOBALS_H_
-#define _OPENGD77_UIGLOBALS_H_
+#ifndef OPENGD77_UIGLOBALS_H_
+#define OPENGD77_UIGLOBALS_H_
+
 
 #include <stdint.h>
 #include <stdbool.h>
+
 #include "functions/settings.h"
 #include "functions/codeplug.h"
+
+
 
 #define MAX_ZONE_SCAN_NUISANCE_CHANNELS       16
 #define NUM_LASTHEARD_STORED                  32
@@ -139,187 +143,155 @@
 
 extern const int DBM_LEVELS[16];
 
-
-typedef enum
-{
-	PRIVATE_CALL_NOT_IN_CALL = 0,
-	PRIVATE_CALL_ACCEPT,
-	PRIVATE_CALL,
-	PRIVATE_CALL_DECLINED
+typedef enum {
+	PRIVATE_CALL_NOT_IN_CALL = 0, PRIVATE_CALL_ACCEPT, PRIVATE_CALL, PRIVATE_CALL_DECLINED
 } privateCallState_t;
 
-
-typedef enum
-{
-	QSO_DISPLAY_IDLE,
-	QSO_DISPLAY_DEFAULT_SCREEN,
-	QSO_DISPLAY_CALLER_DATA,
-	QSO_DISPLAY_CALLER_DATA_UPDATE
+typedef enum {
+	QSO_DISPLAY_IDLE, QSO_DISPLAY_DEFAULT_SCREEN, QSO_DISPLAY_CALLER_DATA, QSO_DISPLAY_CALLER_DATA_UPDATE
 } qsoDisplayState_t;
 
-
-typedef enum
-{
-	SCAN_SCANNING = 0,
-	SCAN_SHORT_PAUSED,
-	SCAN_PAUSED
+typedef enum {
+	SCAN_SCANNING = 0, SCAN_SHORT_PAUSED, SCAN_PAUSED
 } ScanState_t;
 
-typedef enum
-{
-	SCAN_TYPE_NORMAL_STEP = 0,
-	SCAN_TYPE_DUAL_WATCH
+typedef enum {
+	SCAN_TYPE_NORMAL_STEP = 0, SCAN_TYPE_DUAL_WATCH
 } ScanType_t;
 
-typedef struct
-{
-	int 				id;
-	char 				text[20];
+typedef struct {
+	int id;
+	char text[20];
 } dmrIdDataStruct_t;
 
-
-typedef struct LinkItem
-{
-    struct LinkItem 	*prev;
-    uint32_t 			id;
-    uint32_t 			talkGroupOrPcId;
-    char        		contact[21];
-    char        		talkgroup[17];
-    char 				talkerAlias[32];// 4 blocks of data. 6 bytes + 7 bytes + 7 bytes + 7 bytes . plus 1 for termination some more for safety.
-    char 				locator[7];
-    uint32_t			time;// current system time when this station was heard
-    int					receivedTS;
-    struct LinkItem 	*next;
+typedef struct LinkItem {
+	struct LinkItem *prev;
+	uint32_t id;
+	uint32_t talkGroupOrPcId;
+	char contact[21];
+	char talkgroup[17];
+	char talkerAlias[32];  // 4 blocks of data. 6 bytes + 7 bytes + 7 bytes + 7 bytes . plus 1 for termination some more for safety.
+	char locator[7];
+	uint32_t time;  // current system time when this station was heard
+	int receivedTS;
+	struct LinkItem *next;
 } LinkItem_t;
 
 // MessageBox
 #define MESSAGEBOX_MESSAGE_LEN_MAX             ((16 * 3) + 2 /* \n */ + 1 /* \0 */) // Note: 14 char line length for MESSAGEBOX_DECORATION_FRAME
 
-typedef enum
-{
+typedef enum {
 	MESSAGEBOX_TYPE_UNDEF,
 	MESSAGEBOX_TYPE_INFO,
 	MESSAGEBOX_TYPE_PIN_CODE
 } messageBoxType_t;
 
-typedef enum
-{
+typedef enum {
 	MESSAGEBOX_DECORATION_NONE,
 	MESSAGEBOX_DECORATION_FRAME
 } messageBoxDecoration_t;
 
-typedef enum
-{
-	MESSAGEBOX_BUTTONS_NONE,
-	MESSAGEBOX_BUTTONS_OK,
-	MESSAGEBOX_BUTTONS_YESNO,
-	MESSAGEBOX_BUTTONS_DISMISS
+typedef enum {
+	MESSAGEBOX_BUTTONS_NONE, MESSAGEBOX_BUTTONS_OK, MESSAGEBOX_BUTTONS_YESNO, MESSAGEBOX_BUTTONS_DISMISS
 } messageBoxButtons_t;
 
-typedef bool (*messageBoxValidator_t)(void); // MessageBox callback function prototype.
+typedef bool (*messageBoxValidator_t)(void);  // MessageBox callback function prototype.
 
-typedef struct
-{
-	uint32_t            receivedPcId;
-	uint32_t            tgBeforePcMode;
-	qsoDisplayState_t 	displayQSOState;
-	qsoDisplayState_t 	displayQSOStatePrev;
-	bool 				displaySquelch;
-	bool 				isDisplayingQSOData;
-	bool				displayChannelSettings;
-	bool				reverseRepeater;
-	int					currentSelectedChannelNumber;
-	int					currentSelectedContactIndex;
-	int					lastHeardCount;
-	int					receivedPcTS;
+typedef struct {
+	uint32_t receivedPcId;
+	uint32_t tgBeforePcMode;
+	qsoDisplayState_t displayQSOState;
+	qsoDisplayState_t displayQSOStatePrev;
+	bool displaySquelch;
+	bool isDisplayingQSOData;
+	bool displayChannelSettings;
+	bool reverseRepeater;
+	int currentSelectedChannelNumber;
+	int currentSelectedContactIndex;
+	int lastHeardCount;
+	int receivedPcTS;
 
-
-	struct
-	{
-		int 				timer;
-		int 				timerReload;
-		int 				direction;
-		int					availableChannelsCount;
-		int 				nuisanceDeleteIndex;
-		int 				nuisanceDelete[MAX_ZONE_SCAN_NUISANCE_CHANNELS];
-		ScanState_t 		state;
-		bool 				active;
-		bool 				toneActive; // tone scan active flag (CTCSS/DCS)
-		bool				refreshOnEveryStep;
-		bool				lastIteration;
-		ScanType_t			scanType;
-		int					stepTimeMilliseconds;
+	struct {
+		int timer;
+		int timerReload;
+		int direction;
+		int availableChannelsCount;
+		int nuisanceDeleteIndex;
+		int nuisanceDelete[MAX_ZONE_SCAN_NUISANCE_CHANNELS];
+		ScanState_t state;
+		bool active;
+		bool toneActive;  // tone scan active flag (CTCSS/DCS)
+		bool refreshOnEveryStep;
+		bool lastIteration;
+		ScanType_t scanType;
+		int stepTimeMilliseconds;
 	} Scan;
 
-	struct
-	{
-		int 				tmpDmrDestinationFilterLevel;
-		int 				tmpDmrCcTsFilterLevel;
-		int 				tmpAnalogFilterLevel;
-		int					tmpTxRxLockMode;
-		CSSTypes_t			tmpToneScanCSS;
-		uint8_t				tmpVFONumber;
+	struct {
+		int tmpDmrDestinationFilterLevel;
+		int tmpDmrCcTsFilterLevel;
+		int tmpAnalogFilterLevel;
+		int tmpTxRxLockMode;
+		CSSTypes_t tmpToneScanCSS;
+		uint8_t tmpVFONumber;
 	} QuickMenu;
 
-	struct
-	{
-		int 				index;
-		char 				digits[FREQ_ENTER_DIGITS_MAX];
+	struct {
+		int index;
+		char digits[FREQ_ENTER_DIGITS_MAX];
 	} FreqEnter;
 
-	struct
-	{
-		int					lastID;
-		privateCallState_t	state;
+	struct {
+		int lastID;
+		privateCallState_t state;
 	} PrivateCall;
 
-	struct
-	{
-		bool				inhibitInitial;
+	struct {
+		bool inhibitInitial;
 	} VoicePrompts;
 
-	struct
-	{
-		messageBoxType_t         type;
-		messageBoxDecoration_t   decoration;
-		messageBoxButtons_t      buttons;
-		uint8_t                  pinLength;
-		char                     message[MESSAGEBOX_MESSAGE_LEN_MAX]; // 3 lines max for MESSAGEBOX_TYPE_INFO type
-		int                      keyPressed;
-		messageBoxValidator_t    validatorCallback;
-
+	struct {
+		messageBoxType_t type;
+		messageBoxDecoration_t decoration;
+		messageBoxButtons_t buttons;
+		uint8_t pinLength;
+		char message[MESSAGEBOX_MESSAGE_LEN_MAX];  // 3 lines max for MESSAGEBOX_TYPE_INFO type
+		int keyPressed;
+		messageBoxValidator_t validatorCallback;
 	} MessageBox;
 
-	struct
-	{
-		uint32_t                                    nextPeriod;
-		bool                                        isKeying;
-		uint8_t                                     buffer[17U]; // 16 tones + final time-length
-		uint8_t                                     poLen;
-		uint8_t                                     poPtr;
-		struct_codeplugSignalling_DTMFDurations_t   durations;
-		bool                                        inTone;
+	struct {
+		uint32_t nextPeriod;
+		bool isKeying;
+		uint8_t buffer[17U];  // 16 tones + final time-length
+		uint8_t poLen;
+		uint8_t poPtr;
+		struct_codeplugSignalling_DTMFDurations_t durations;
+		bool inTone;
 	} DTMFContactList;
-
 } uiDataGlobal_t;
 
-extern const char 				*POWER_LEVELS[];
-extern const char 				*POWER_LEVEL_UNITS[];
-extern const char 				*DMR_DESTINATION_FILTER_LEVELS[];
-extern const char 				*DMR_CCTS_FILTER_LEVELS[];
-extern const char 				*ANALOG_FILTER_LEVELS[];
 
-extern uiDataGlobal_t 			uiDataGlobal;
 
-extern settingsStruct_t 		originalNonVolatileSettings; // used to store previous settings in options edition related menus.
+extern const char *POWER_LEVELS[];
+extern const char *POWER_LEVEL_UNITS[];
+extern const char *DMR_DESTINATION_FILTER_LEVELS[];
+extern const char *DMR_CCTS_FILTER_LEVELS[];
+extern const char *ANALOG_FILTER_LEVELS[];
 
-extern struct_codeplugZone_t 	currentZone;
+extern uiDataGlobal_t uiDataGlobal;
+
+extern settingsStruct_t originalNonVolatileSettings;  // used to store previous settings in options edition related menus.
+
+extern struct_codeplugZone_t currentZone;
 extern struct_codeplugRxGroup_t currentRxGroupData;
-extern int						lastLoadedRxGroup;
+extern int lastLoadedRxGroup;
 extern struct_codeplugContact_t currentContactData;
 
-extern LinkItem_t 				*LinkHead;
+extern LinkItem_t *LinkHead;
 
-extern bool 					PTTToggledDown;
+extern bool PTTToggledDown;
 
-#endif
+
+
+#endif	/* !OPENGD77_UIGLOBALS_H_ */

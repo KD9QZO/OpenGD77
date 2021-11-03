@@ -15,6 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
+
 #include "dmr_codec/codec.h"
 #include "functions/sound.h"
 #include "functions/voicePrompts.h"
@@ -22,112 +23,112 @@
 #include "user_interface/uiLocalisation.h"
 #include "functions/rxPowerSaving.h"
 
-const uint32_t VOICE_PROMPTS_DATA_MAGIC = 0x5056;//'VP'
-const uint32_t VOICE_PROMPTS_DATA_VERSION = 0x0003;// Version 3 does not have the PROMPT_TBD items in it
-#define VOICE_PROMPTS_TOC_SIZE 256
+
+
+const uint32_t VOICE_PROMPTS_DATA_MAGIC = 0x5056;	// 'VP'
+const uint32_t VOICE_PROMPTS_DATA_VERSION = 0x0003;	// Version 3 does not have the PROMPT_TBD items in it
+
+
+#define VOICE_PROMPTS_TOC_SIZE (256)
+
+
 
 static void getAmbeData(int offset,int length);
 static void voicePromptsTerminateAndInit(void);
 
-typedef struct
-{
+/**
+ * \brief Data header for voice prompts
+ */
+typedef struct {
 	uint32_t magic;
 	uint32_t version;
 } VoicePromptsDataHeader_t;
 
+
 const uint32_t VOICE_PROMPTS_FLASH_HEADER_ADDRESS = 0xE0000;
-const uint32_t VOICE_PROMPTS_FLASH_DATA_ADDRESS = VOICE_PROMPTS_FLASH_HEADER_ADDRESS + sizeof(VoicePromptsDataHeader_t) + sizeof(uint32_t)*VOICE_PROMPTS_TOC_SIZE ;
+const uint32_t VOICE_PROMPTS_FLASH_DATA_ADDRESS = VOICE_PROMPTS_FLASH_HEADER_ADDRESS + sizeof(VoicePromptsDataHeader_t) + sizeof(uint32_t)*VOICE_PROMPTS_TOC_SIZE;
+
+
 // 76 x 27 byte ambe frames
-#define AMBE_DATA_BUFFER_SIZE  2052
+/**
+ * \brief The AMBE data buffer size
+ *
+ * \note The default value for this buffer is \b 2052 bytes; this holds \b 76 AMBE frames, each of which is \b 27 bytes.
+ */
+#define AMBE_DATA_BUFFER_SIZE (2052)
+
+
 bool voicePromptDataIsLoaded = false;
 bool voicePromptIsActive = false;
 static int promptDataPosition = -1;
 static int currentPromptLength = -1;
 
+
 __attribute__((section(".data.$RAM2")))static uint8_t ambeData[AMBE_DATA_BUFFER_SIZE];
 
 #define VOICE_PROMPTS_SEQUENCE_BUFFER_SIZE 128
 
-typedef struct
-{
-	uint8_t  Buffer[VOICE_PROMPTS_SEQUENCE_BUFFER_SIZE];
-	int  Pos;
-	int  Length;
+typedef struct {
+	uint8_t Buffer[VOICE_PROMPTS_SEQUENCE_BUFFER_SIZE];
+	int Pos;
+	int Length;
 } VoicePromptsSequence_t;
 
-__attribute__((section(".data.$RAM2"))) static VoicePromptsSequence_t voicePromptsCurrentSequence =
-{
+__attribute__((section(".data.$RAM2"))) static VoicePromptsSequence_t voicePromptsCurrentSequence = {
 	.Pos = 0,
 	.Length = 0
 };
 
 __attribute__((section(".data.$RAM2"))) uint32_t tableOfContents[VOICE_PROMPTS_TOC_SIZE];
 
-void voicePromptsCacheInit(void)
-{
+void voicePromptsCacheInit(void) {
 	VoicePromptsDataHeader_t header;
 	SPI_Flash_read(VOICE_PROMPTS_FLASH_HEADER_ADDRESS,(uint8_t *)&header,sizeof(VoicePromptsDataHeader_t));
 
-	if ((header.magic == VOICE_PROMPTS_DATA_MAGIC) && (header.version == VOICE_PROMPTS_DATA_VERSION))
-	{
+	if ((header.magic == VOICE_PROMPTS_DATA_MAGIC) && (header.version == VOICE_PROMPTS_DATA_VERSION)) {
 		voicePromptDataIsLoaded = SPI_Flash_read(VOICE_PROMPTS_FLASH_HEADER_ADDRESS + sizeof(VoicePromptsDataHeader_t), (uint8_t *)&tableOfContents, sizeof(uint32_t) * VOICE_PROMPTS_TOC_SIZE);
 	}
 
 	// is data is not loaded change prompt mode back to beep.
-	if ((nonVolatileSettings.audioPromptMode > AUDIO_PROMPT_MODE_BEEP) && (voicePromptDataIsLoaded == false))
-	{
+	if ((nonVolatileSettings.audioPromptMode > AUDIO_PROMPT_MODE_BEEP) && (voicePromptDataIsLoaded == false)) {
 		settingsSet(nonVolatileSettings.audioPromptMode, AUDIO_PROMPT_MODE_BEEP);
 	}
 }
 
-static void getAmbeData(int offset,int length)
-{
-	if (length <= AMBE_DATA_BUFFER_SIZE)
-	{
+static void getAmbeData(int offset,int length) {
+	if (length <= AMBE_DATA_BUFFER_SIZE) {
 		SPI_Flash_read(VOICE_PROMPTS_FLASH_DATA_ADDRESS + offset, (uint8_t *)ambeData, length);
 	}
 }
 
-void voicePromptsTick(void)
-{
-	if (promptDataPosition < currentPromptLength)
-	{
-		if (wavbuffer_count < (WAV_BUFFER_COUNT - 6))
-		{
+void voicePromptsTick(void) {
+	if (promptDataPosition < currentPromptLength) {
+		if (wavbuffer_count < (WAV_BUFFER_COUNT - 6)) {
 			codecDecode((uint8_t *)&ambeData[promptDataPosition], 3);
 			soundTickRXBuffer();
 			promptDataPosition += 27;
 		}
-	}
-	else
-	{
-		if (voicePromptsCurrentSequence.Pos < (voicePromptsCurrentSequence.Length - 1))
-		{
+	} else {
+		if (voicePromptsCurrentSequence.Pos < (voicePromptsCurrentSequence.Length - 1)) {
 			voicePromptsCurrentSequence.Pos++;
 			promptDataPosition = 0;
 			int promptNumber = voicePromptsCurrentSequence.Buffer[voicePromptsCurrentSequence.Pos];
 
 			currentPromptLength = tableOfContents[promptNumber + 1] - tableOfContents[promptNumber];
 			getAmbeData(tableOfContents[promptNumber],currentPromptLength);
-		}
-		else
-		{
+		} else {
 			// wait for wave buffer to empty when prompt has finished playing
-			if (wavbuffer_count == 0)
-			{
+			if (wavbuffer_count == 0) {
 				voicePromptsTerminate();
 			}
 		}
 	}
 }
 
-void voicePromptsTerminate(void)
-{
-	if (voicePromptIsActive)
-	{
+void voicePromptsTerminate(void) {
+	if (voicePromptIsActive) {
 		disableAudioAmp(AUDIO_AMP_MODE_PROMPT);
-		if (trxGetMode() == RADIO_MODE_ANALOG)
-		{
+		if (trxGetMode() == RADIO_MODE_ANALOG) {
 			GPIO_PinWrite(GPIO_RX_audio_mux, Pin_RX_audio_mux, 1); // connect AT1846S audio to speaker
 		}
 		voicePromptIsActive = false;
@@ -137,95 +138,66 @@ void voicePromptsTerminate(void)
 	}
 }
 
-void voicePromptsInit(void)
-{
-	if (nonVolatileSettings.audioPromptMode < AUDIO_PROMPT_MODE_VOICE_LEVEL_1)
-	{
+void voicePromptsInit(void) {
+	if (nonVolatileSettings.audioPromptMode < AUDIO_PROMPT_MODE_VOICE_LEVEL_1) {
 		return;
 	}
 
-	if (voicePromptIsActive)
-	{
+	if (voicePromptIsActive) {
 		voicePromptsTerminateAndInit();
-	}
-	else
-	{
+	} else {
 		voicePromptsCurrentSequence.Length = 0;
 		voicePromptsCurrentSequence.Pos = 0;
 	}
 }
 
-static void voicePromptsTerminateAndInit(void)
-{
+static void voicePromptsTerminateAndInit(void) {
 	voicePromptsTerminate();
 	voicePromptsInit();
 	voicePromptsCurrentSequence.Length = 0;
 	voicePromptsCurrentSequence.Pos = 0;
 }
 
-void voicePromptsAppendPrompt(voicePrompt_t prompt)
-{
-	if (nonVolatileSettings.audioPromptMode < AUDIO_PROMPT_MODE_VOICE_LEVEL_1)
-	{
+void voicePromptsAppendPrompt(voicePrompt_t prompt) {
+	if (nonVolatileSettings.audioPromptMode < AUDIO_PROMPT_MODE_VOICE_LEVEL_1) {
 		return;
 	}
 
-	if (voicePromptIsActive)
-	{
+	if (voicePromptIsActive) {
 		voicePromptsTerminateAndInit();
 	}
 
-	if (voicePromptsCurrentSequence.Length < VOICE_PROMPTS_SEQUENCE_BUFFER_SIZE)
-	{
+	if (voicePromptsCurrentSequence.Length < VOICE_PROMPTS_SEQUENCE_BUFFER_SIZE) {
 		voicePromptsCurrentSequence.Buffer[voicePromptsCurrentSequence.Length] = prompt;
 		voicePromptsCurrentSequence.Length++;
 	}
 }
 
-void voicePromptsAppendString(char *promptString)
-{
-	if (nonVolatileSettings.audioPromptMode < AUDIO_PROMPT_MODE_VOICE_LEVEL_1)
-	{
+void voicePromptsAppendString(char *promptString) {
+	if (nonVolatileSettings.audioPromptMode < AUDIO_PROMPT_MODE_VOICE_LEVEL_1) {
 		return;
 	}
 
-	if (voicePromptIsActive)
-	{
+	if (voicePromptIsActive) {
 		voicePromptsTerminateAndInit();
 	}
 
-	while (*promptString != 0)
-	{
-		if ((*promptString >= '0') && (*promptString <= '9'))
-		{
+	while (*promptString != 0) {
+		if ((*promptString >= '0') && (*promptString <= '9')) {
 			voicePromptsAppendPrompt(*promptString - '0' + PROMPT_0);
-		}
-		else if ((*promptString >= 'A') && (*promptString <= 'Z'))
-		{
+		} else if ((*promptString >= 'A') && (*promptString <= 'Z')) {
 			voicePromptsAppendPrompt(*promptString - 'A' + PROMPT_A);
-		}
-		else if ((*promptString >= 'a') && (*promptString <= 'z'))
-		{
+		} else if ((*promptString >= 'a') && (*promptString <= 'z')) {
 			voicePromptsAppendPrompt(*promptString - 'a' + PROMPT_A);
-		}
-		else if (*promptString == '.')
-		{
+		} else if (*promptString == '.') {
 			voicePromptsAppendPrompt(PROMPT_POINT);
-		}
-		else if (*promptString == '+')
-		{
+		} else if (*promptString == '+') {
 			voicePromptsAppendPrompt(PROMPT_PLUS);
-		}
-		else if (*promptString == '-')
-		{
+		} else if (*promptString == '-') {
 			voicePromptsAppendPrompt(PROMPT_MINUS);
-		}
-		else if (*promptString == '%')
-		{
+		} else if (*promptString == '%') {
 			voicePromptsAppendPrompt(PROMPT_PERCENT);
-		}
-		else
-		{
+		} else {
 			// otherwise just add silence
 			voicePromptsAppendPrompt(PROMPT_SILENCE);
 		}
@@ -234,31 +206,25 @@ void voicePromptsAppendString(char *promptString)
 	}
 }
 
-void voicePromptsAppendInteger(int32_t value)
-{
+void voicePromptsAppendInteger(int32_t value) {
 	char buf[12] = {0}; // min: -2147483648, max: 2147483647
 	itoa(value, buf, 10);
 	voicePromptsAppendString(buf);
 }
 
-void voicePromptsAppendLanguageString(const char * const *languageStringAdd)
-{
-	if ((nonVolatileSettings.audioPromptMode < AUDIO_PROMPT_MODE_VOICE_LEVEL_1) || (languageStringAdd == NULL))
-	{
+void voicePromptsAppendLanguageString(const char * const *languageStringAdd) {
+	if ((nonVolatileSettings.audioPromptMode < AUDIO_PROMPT_MODE_VOICE_LEVEL_1) || (languageStringAdd == NULL)) {
 		return;
 	}
 	voicePromptsAppendPrompt(NUM_VOICE_PROMPTS + (languageStringAdd - &currentLanguage->LANGUAGE_NAME));
 }
 
-void voicePromptsPlay(void)
-{
-	if (nonVolatileSettings.audioPromptMode < AUDIO_PROMPT_MODE_VOICE_LEVEL_1)
-	{
+void voicePromptsPlay(void) {
+	if (nonVolatileSettings.audioPromptMode < AUDIO_PROMPT_MODE_VOICE_LEVEL_1) {
 		return;
 	}
 
-	if ((voicePromptIsActive == false) && (voicePromptsCurrentSequence.Length > 0))
-	{
+	if ((voicePromptIsActive == false) && (voicePromptsCurrentSequence.Length > 0)) {
 		rxPowerSavingSetState(ECOPHASE_POWERSAVE_INACTIVE);
 
 		int promptNumber = voicePromptsCurrentSequence.Buffer[0];
@@ -276,12 +242,10 @@ void voicePromptsPlay(void)
 	}
 }
 
-inline bool voicePromptsIsPlaying(void)
-{
+inline bool voicePromptsIsPlaying(void) {
 	return (voicePromptIsActive);
 }
 
-bool voicePromptsHasDataToPlay(void)
-{
+bool voicePromptsHasDataToPlay(void) {
 	return (voicePromptsCurrentSequence.Length > 0);
 }

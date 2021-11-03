@@ -24,25 +24,32 @@ static SemaphoreHandle_t battSemaphore = NULL;
 
 #define VOLTAGE_BUFFER_LEN 128
 static const float BATTERY_CRITICAL_VOLTAGE = 66.7f;
-static const int TEMPERATURE_CRITICAL = 500; // 50°C
+static const int TEMPERATURE_CRITICAL = 500;  // 50°C
 static float prevAverageBatteryVoltage = 0.0f;
 static int prevTemperature = 0;
 
 static menuStatus_t menuRadioInfosExitCode = MENU_STATUS_SUCCESS;
 
-typedef struct
-{
-	int32_t  buffer[VOLTAGE_BUFFER_LEN];
+typedef struct {
+	int32_t buffer[VOLTAGE_BUFFER_LEN];
 	int32_t *head;
 	int32_t *tail;
 	int32_t *end;
-	bool     modified;
+	bool modified;
 } voltageCircularBuffer_t;
 
 __attribute__((section(".data.$RAM2"))) voltageCircularBuffer_t batteryVoltageHistory;
 
-enum { RADIO_INFOS_BATTERY_LEVEL = 0, RADIO_INFOS_TEMPERATURE_LEVEL, RADIO_INFOS_BATTERY_GRAPH, NUM_RADIO_INFOS_MENU_ITEMS };
-enum { GRAPH_FILL = 0, GRAPH_LINE };
+enum {
+	RADIO_INFOS_BATTERY_LEVEL = 0,
+	RADIO_INFOS_TEMPERATURE_LEVEL,
+	RADIO_INFOS_BATTERY_GRAPH,
+	NUM_RADIO_INFOS_MENU_ITEMS
+};
+enum {
+	GRAPH_FILL = 0,
+	GRAPH_LINE
+};
 
 static int displayMode = RADIO_INFOS_BATTERY_LEVEL;
 static int graphStyle = GRAPH_FILL;
@@ -53,100 +60,82 @@ static void updateScreen(bool forceRedraw);
 static void handleEvent(uiEvent_t *ev);
 static void updateVoicePrompts(bool spellIt);
 
-static void circularBufferInit(voltageCircularBuffer_t *cb)
-{
+static void circularBufferInit(voltageCircularBuffer_t *cb) {
 	cb->end = &cb->buffer[VOLTAGE_BUFFER_LEN - 1];
 	cb->head = cb->buffer;
 	cb->tail = cb->buffer;
 	cb->modified = false;
 }
 
-static void circularBufferPushBack(voltageCircularBuffer_t *cb, const int32_t item)
-{
+static void circularBufferPushBack(voltageCircularBuffer_t *cb, const int32_t item) {
 	cb->modified = true;
 
 	*cb->head = item;
 	cb->head++;
 
-    if(cb->head == cb->end)
-    {
-    	cb->head = cb->buffer;
-    }
+	if (cb->head == cb->end) {
+		cb->head = cb->buffer;
+	}
 
-    if (cb->tail == cb->head)
-    {
-    	cb->tail++;
+	if (cb->tail == cb->head) {
+		cb->tail++;
 
-    	if(cb->tail == cb->end)
-    	{
-    		cb->tail = cb->buffer;
-    	}
-    }
+		if (cb->tail == cb->end) {
+			cb->tail = cb->buffer;
+		}
+	}
 }
 
-static size_t circularBufferGetData(voltageCircularBuffer_t *cb, int32_t *data, size_t dataLen)
-{
-     size_t  count = 0;
-     int32_t *p = cb->tail;
+static size_t circularBufferGetData(voltageCircularBuffer_t *cb, int32_t *data, size_t dataLen) {
+	size_t count = 0;
+	int32_t *p = cb->tail;
 
-     while ((p != cb->head) && (count < dataLen))
-     {
-    	 *(data + count) = *p;
+	while ((p != cb->head) && (count < dataLen)) {
+		*(data + count) = *p;
 
-    	 p++;
-    	 count++;
+		p++;
+		count++;
 
-    	 if (p == cb->end)
-    	 {
-    		 p = cb->buffer;
-    	 }
-     }
+		if (p == cb->end) {
+			p = cb->buffer;
+		}
+	}
 
-     return count;
+	return count;
 }
 
-menuStatus_t menuRadioInfos(uiEvent_t *ev, bool isFirstRun)
-{
+menuStatus_t menuRadioInfos(uiEvent_t *ev, bool isFirstRun) {
 	static uint32_t m = 0;
 
-	if (isFirstRun)
-	{
+	if (isFirstRun) {
 		menuDataGlobal.endIndex = NUM_RADIO_INFOS_MENU_ITEMS;
 		ucClearBuf();
 		menuDisplayTitle(currentLanguage->radio_info);
 		ucRenderRows(0, 2);
 		updateScreen(true);
 		updateVoicePrompts(true);
-	}
-	else
-	{
-		if ((ev->time - m) > 500)
-		{
+	} else {
+		if ((ev->time - m) > 500) {
 			m = ev->time;
-			updateScreen(false);// update the screen each 500ms to show any changes to the battery voltage or low battery
+			updateScreen(false);  // update the screen each 500ms to show any changes to the battery voltage or low battery
 		}
 
 		menuRadioInfosExitCode = MENU_STATUS_SUCCESS;
 
-		if (ev->hasEvent)
-		{
+		if (ev->hasEvent) {
 			handleEvent(ev);
 		}
 	}
 	return menuRadioInfosExitCode;
 }
 
-static void updateScreen(bool forceRedraw)
-{
+static void updateScreen(bool forceRedraw) {
 	static bool blink = false;
 	bool renderArrowOnly = true;
 
-	switch (displayMode)
-	{
-		case RADIO_INFOS_BATTERY_LEVEL:
-		{
-			if ((prevAverageBatteryVoltage != averageBatteryVoltage) || (averageBatteryVoltage < BATTERY_CRITICAL_VOLTAGE) || forceRedraw)
-			{
+	switch (displayMode) {
+		case RADIO_INFOS_BATTERY_LEVEL: {
+			if ((prevAverageBatteryVoltage != averageBatteryVoltage) || (averageBatteryVoltage < BATTERY_CRITICAL_VOLTAGE) || forceRedraw) {
 				char buffer[17];
 				int volts, mvolts;
 				const int x = 88;
@@ -155,8 +144,7 @@ static void updateScreen(bool forceRedraw)
 				prevAverageBatteryVoltage = averageBatteryVoltage;
 				renderArrowOnly = false;
 
-				if (forceRedraw)
-				{
+				if (forceRedraw) {
 					// Clear whole drawing region
 					ucFillRect(0, 14, DISPLAY_SIZE_X, DISPLAY_SIZE_Y - 14, true);
 					// Draw...
@@ -166,11 +154,9 @@ static void updateScreen(bool forceRedraw)
 					ucDrawRoundRect(x, 19, 28, DISPLAY_SIZE_Y - 20, 3, true);
 					// Positive pole frame
 					ucFillRoundRect(x + 9, 15, 10, 6, 2, true);
-				}
-				else
-				{
+				} else {
 					// Clear voltage area
-					ucFillRect(((x - (4 * 8)) >> 1) , 19 + 1, (4 * 8), (DISPLAY_SIZE_Y - 20) - 4, true);
+					ucFillRect(((x - (4 * 8)) >> 1), 19 + 1, (4 * 8), (DISPLAY_SIZE_Y - 20) - 4, true);
 					// Clear level area
 					ucFillRoundRect(x + 4, 23, 20, battLevelHeight, 2, false);
 				}
@@ -179,23 +165,22 @@ static void updateScreen(bool forceRedraw)
 				snprintf(buffer, 17, "%1d.%1dV", volts, mvolts);
 				ucPrintAt(((x - (4 * 8)) >> 1), 19 + 1, buffer, FONT_SIZE_3);
 				snprintf(buffer, 17, "%d%%", getBatteryPercentage());
-				ucPrintAt(((x - (strlen(buffer) * 8)) >> 1), (DISPLAY_SIZE_Y - 20)
+
 #if defined(PLATFORM_RD5R)
-						+ 7
+				ucPrintAt(((x - (strlen(buffer) * 8)) >> 1), (DISPLAY_SIZE_Y - 20) + 7, buffer, FONT_SIZE_3);
+#else
+				ucPrintAt(((x - (strlen(buffer) * 8)) >> 1), (DISPLAY_SIZE_Y - 20), buffer, FONT_SIZE_3);
 #endif
-						, buffer, FONT_SIZE_3);
 
 				uint32_t h = (uint32_t)(((averageBatteryVoltage - CUTOFF_VOLTAGE_UPPER_HYST) * battLevelHeight) / (BATTERY_MAX_VOLTAGE - CUTOFF_VOLTAGE_UPPER_HYST));
-				if (h > battLevelHeight)
-				{
+				if (h > battLevelHeight) {
 					h = battLevelHeight;
 				}
 
 				// Draw Level
-				ucFillRoundRect(x + 4, 23 + battLevelHeight - h , 20, h, 2, (averageBatteryVoltage < BATTERY_CRITICAL_VOLTAGE) ? blink : true);
+				ucFillRoundRect(x + 4, 23 + battLevelHeight - h, 20, h, 2, (averageBatteryVoltage < BATTERY_CRITICAL_VOLTAGE) ? blink : true);
 
-				if (voicePromptsIsPlaying() == false)
-				{
+				if (voicePromptsIsPlaying() == false) {
 					updateVoicePrompts(false);
 				}
 			}
@@ -203,11 +188,10 @@ static void updateScreen(bool forceRedraw)
 			// Low blinking arrow
 			ucFillTriangle(63, (DISPLAY_SIZE_Y - 1), 59, (DISPLAY_SIZE_Y - 5), 67, (DISPLAY_SIZE_Y - 5), blink);
 		}
-		break;
+			break;
 
-		case RADIO_INFOS_BATTERY_GRAPH:
-		{
-#define  CHART_WIDTH 104
+		case RADIO_INFOS_BATTERY_GRAPH: {
+#define CHART_WIDTH 104
 			static int32_t hist[CHART_WIDTH];
 			static size_t histLen = 0;
 			bool newHistAvailable = false;
@@ -215,18 +199,15 @@ static void updateScreen(bool forceRedraw)
 			// Grab history values.
 			// There is a 10 ticks timeout, if it kicks in, history length will be 0, then
 			// redraw will be done on the next run
-			if (xSemaphoreTake(battSemaphore, (TickType_t)10) == pdTRUE)
-			{
-				if ((newHistAvailable = batteryVoltageHistory.modified) == true)
-				{
+			if (xSemaphoreTake(battSemaphore, (TickType_t)10) == pdTRUE) {
+				if ((newHistAvailable = batteryVoltageHistory.modified) == true) {
 					histLen = circularBufferGetData(&batteryVoltageHistory, hist, (sizeof(hist) / sizeof(hist[0])));
 					batteryVoltageHistory.modified = false;
 				}
 				xSemaphoreGive(battSemaphore);
 			}
 
-			if (newHistAvailable || forceRedraw)
-			{
+			if (newHistAvailable || forceRedraw) {
 				static const uint8_t chartX = 2 + (2 * 6) + 3 + 2;
 				static const uint8_t chartY = 14 + 1 + 2;
 				const int chartHeight = (DISPLAY_SIZE_Y - 26);
@@ -239,8 +220,7 @@ static void updateScreen(bool forceRedraw)
 				renderArrowOnly = false;
 
 				// Redraw chart's axes, ticks and so on
-				if (forceRedraw)
-				{
+				if (forceRedraw) {
 					// Clear whole drawing region
 					ucFillRect(0, 14, DISPLAY_SIZE_X, DISPLAY_SIZE_Y - 14, true);
 
@@ -257,34 +237,26 @@ static void updateScreen(bool forceRedraw)
 					ucPrintAt(chartX - 3 - 12 - 3, ((chartY + chartHeight) - maxVH) - 3, "8V", FONT_SIZE_1);
 
 					// Time ticks
-					for (uint8_t i = 0; i < CHART_WIDTH + 2; i += 22 /* ~ 15 minutes */)
-					{
+					for (uint8_t i = 0; i < CHART_WIDTH + 2; i += 22 /* ~ 15 minutes */) {
 						ucSetPixel(chartX + i, (chartY + chartHeight) + 3, true);
 					}
-				}
-				else
-				{
+				} else {
 					ucFillRect(chartX, chartY, CHART_WIDTH, chartHeight, true);
 				}
 
 				// Draw chart values, according to style
-				for (size_t i = 0; i < histLen; i++)
-				{
+				for (size_t i = 0; i < histLen; i++) {
 					uint32_t y = (uint32_t)(((hist[i] - CUTOFF_VOLTAGE_UPPER_HYST) * chartHeight) / (BATTERY_MAX_VOLTAGE - CUTOFF_VOLTAGE_UPPER_HYST));
 
-					if (graphStyle == GRAPH_FILL)
-					{
+					if (graphStyle == GRAPH_FILL) {
 						ucDrawFastVLine(chartX + i, ((chartY + chartHeight) - y), y, true);
-					}
-					else
-					{
+					} else {
 						ucSetPixel(chartX + i, ((chartY + chartHeight) - y), true);
 					}
 				}
 
 				// Min/Max dot lines
-				for (uint8_t i = 0; i < CHART_WIDTH + 2; i++)
-				{
+				for (uint8_t i = 0; i < CHART_WIDTH + 2; i++) {
 					ucSetPixel(chartX + i, ((chartY + chartHeight) - minVH), (i % 2) ? false : true);
 					ucSetPixel(chartX + i, ((chartY + chartHeight) - maxVH), (i % 2) ? false : true);
 				}
@@ -293,19 +265,16 @@ static void updateScreen(bool forceRedraw)
 			// Upwards blinking arrow
 			ucFillTriangle(63, (DISPLAY_SIZE_Y - 5), 59, (DISPLAY_SIZE_Y - 1), 67, (DISPLAY_SIZE_Y - 1), blink);
 
-			if (voicePromptsIsPlaying() == false)
-			{
+			if (voicePromptsIsPlaying() == false) {
 				updateVoicePrompts(false);
 			}
 		}
-		break;
+			break;
 
-		case RADIO_INFOS_TEMPERATURE_LEVEL:
-		{
+		case RADIO_INFOS_TEMPERATURE_LEVEL: {
 			int temperature = getTemperature();
 
-			if ((prevTemperature != temperature) || (temperature > TEMPERATURE_CRITICAL) || forceRedraw)
-			{
+			if ((prevTemperature != temperature) || (temperature > TEMPERATURE_CRITICAL) || forceRedraw) {
 				char buffer[17];
 				const int x = 102;
 #if defined(PLATFORM_RD5R)
@@ -321,8 +290,7 @@ static void updateScreen(bool forceRedraw)
 				prevTemperature = temperature;
 				renderArrowOnly = false;
 
-				if (forceRedraw)
-				{
+				if (forceRedraw) {
 					// Clear whole drawing region
 					ucFillRect(0, 14, DISPLAY_SIZE_X, DISPLAY_SIZE_Y - 14, true);
 
@@ -341,11 +309,9 @@ static void updateScreen(bool forceRedraw)
 					ucFillRect(x - 5, 20, 11, temperatureHeight, true);
 
 					// H lines, min/max markers
-					ucDrawFastHLine(x - (7 + 5), 20, 5, true); // MAX: 70°C
-					ucDrawFastHLine(x - (7 + 5), (temperatureHeight + 20) - 1, 5, true); // MIN: 10°C
-				}
-				else
-				{
+					ucDrawFastHLine(x - (7 + 5), 20, 5, true);  // MAX: 70°C
+					ucDrawFastHLine(x - (7 + 5), (temperatureHeight + 20) - 1, 5, true);  // MIN: 10°C
+				} else {
 					// Clear temperature text area
 					ucFillRect((((x - (7 + 5)) - (7 * 8)) >> 1), 20, (7 * 8), (DISPLAY_SIZE_Y - 20) - 4, true);
 
@@ -357,16 +323,14 @@ static void updateScreen(bool forceRedraw)
 				snprintf(buffer, 17, "%3d.%1d%s", (temperature / 10), abs(temperature % 10), currentLanguage->celcius);
 				ucPrintAt((((x - (7 + 5)) - (7 * 8)) >> 1), (((DISPLAY_SIZE_Y - (14 + FONT_SIZE_3_HEIGHT)) >> 1) + 14), buffer, FONT_SIZE_3);
 
-				uint32_t t = (uint32_t)((((CLAMP(temperature, 100, 700)) - 100) * temperatureHeight) / (700 - 100)); // clamp to 10..70 °C, then scale
+				uint32_t t = (uint32_t)((((CLAMP(temperature, 100, 700)) - 100) * temperatureHeight) / (700 - 100));  // clamp to 10..70 °C, then scale
 
 				// Draw Level
-				if (t)
-				{
-					ucFillRect(x - 4, 20 + temperatureHeight - t , 9, t, (temperature > TEMPERATURE_CRITICAL) ? blink : false);
+				if (t) {
+					ucFillRect(x - 4, 20 + temperatureHeight - t, 9, t, (temperature > TEMPERATURE_CRITICAL) ? blink : false);
 				}
 
-				if (voicePromptsIsPlaying() == false)
-				{
+				if (voicePromptsIsPlaying() == false) {
 					updateVoicePrompts(false);
 				}
 			}
@@ -375,7 +339,7 @@ static void updateScreen(bool forceRedraw)
 			ucFillTriangle(63, (DISPLAY_SIZE_Y - 1), 59, (DISPLAY_SIZE_Y - 3), 67, (DISPLAY_SIZE_Y - 3), blink);
 			ucFillTriangle(63, (DISPLAY_SIZE_Y - 5), 59, (DISPLAY_SIZE_Y - 3), 67, (DISPLAY_SIZE_Y - 3), blink);
 		}
-		break;
+			break;
 	}
 
 	blink = !blink;
@@ -383,12 +347,9 @@ static void updateScreen(bool forceRedraw)
 	ucRenderRows((renderArrowOnly ? (DISPLAY_NUMBER_OF_ROWS - 1) : 1), DISPLAY_NUMBER_OF_ROWS);
 }
 
-static void handleEvent(uiEvent_t *ev)
-{
-	if (ev->events & FUNCTION_EVENT)
-	{
-		if (QUICKKEY_TYPE(ev->function) == QUICKKEY_MENU)
-		{
+static void handleEvent(uiEvent_t *ev) {
+	if (ev->events & FUNCTION_EVENT) {
+		if (QUICKKEY_TYPE(ev->function) == QUICKKEY_MENU) {
 			displayMode = QUICKKEY_ENTRYID(ev->function);
 			updateScreen(true);
 			updateVoicePrompts(true);
@@ -396,87 +357,65 @@ static void handleEvent(uiEvent_t *ev)
 		}
 	}
 
-	if (ev->events & BUTTON_EVENT)
-	{
-		if (repeatVoicePromptOnSK1(ev))
-		{
+	if (ev->events & BUTTON_EVENT) {
+		if (repeatVoicePromptOnSK1(ev)) {
 			return;
 		}
 	}
 
-	if (KEYCHECK_SHORTUP(ev->keys, KEY_RED) || KEYCHECK_SHORTUP(ev->keys, KEY_GREEN))
-	{
+	if (KEYCHECK_SHORTUP(ev->keys, KEY_RED) || KEYCHECK_SHORTUP(ev->keys, KEY_GREEN)) {
 		menuSystemPopPreviousMenu();
 		return;
-	}
-	else if (KEYCHECK_PRESS(ev->keys, KEY_DOWN))
-	{
-		if (displayMode < RADIO_INFOS_BATTERY_GRAPH)
-		{
+	} else if (KEYCHECK_PRESS(ev->keys, KEY_DOWN)) {
+		if (displayMode < RADIO_INFOS_BATTERY_GRAPH) {
 			displayMode++;
 			updateScreen(true);
 			updateVoicePrompts(true);
 		}
-	}
-	else if (KEYCHECK_PRESS(ev->keys, KEY_UP))
-	{
-		if (displayMode > RADIO_INFOS_BATTERY_LEVEL)
-		{
+	} else if (KEYCHECK_PRESS(ev->keys, KEY_UP)) {
+		if (displayMode > RADIO_INFOS_BATTERY_LEVEL) {
 			displayMode--;
 			updateScreen(true);
 			updateVoicePrompts(true);
 		}
-	}
-	else if (KEYCHECK_PRESS(ev->keys, KEY_LEFT))
-	{
-		if (displayMode == RADIO_INFOS_BATTERY_GRAPH)
-		{
-			if (graphStyle == GRAPH_LINE)
-			{
+	} else if (KEYCHECK_PRESS(ev->keys, KEY_LEFT)) {
+		if (displayMode == RADIO_INFOS_BATTERY_GRAPH) {
+			if (graphStyle == GRAPH_LINE) {
 				graphStyle = GRAPH_FILL;
 				updateScreen(true);
 			}
 		}
-	}
-	else if (KEYCHECK_PRESS(ev->keys, KEY_RIGHT))
-	{
-		if (displayMode == RADIO_INFOS_BATTERY_GRAPH)
-		{
-			if (graphStyle == GRAPH_FILL)
-			{
+	} else if (KEYCHECK_PRESS(ev->keys, KEY_RIGHT)) {
+		if (displayMode == RADIO_INFOS_BATTERY_GRAPH) {
+			if (graphStyle == GRAPH_FILL) {
 				graphStyle = GRAPH_LINE;
 				updateScreen(true);
 			}
 		}
 	}
 
-	if (KEYCHECK_SHORTUP_NUMBER(ev->keys) && (BUTTONCHECK_DOWN(ev, BUTTON_SK2)))
-	{
+	if (KEYCHECK_SHORTUP_NUMBER(ev->keys) && (BUTTONCHECK_DOWN(ev, BUTTON_SK2))) {
 		saveQuickkeyMenuIndex(ev->keys.key, menuSystemGetCurrentMenuNumber(), displayMode, 0);
 		return;
 	}
 }
 
-void menuRadioInfosInit(void)
-{
+void menuRadioInfosInit(void) {
 	battSemaphore = xSemaphoreCreateMutex();
 
-	if (battSemaphore == NULL)
-	{
-		while(true); // Something better maybe ?
+	if (battSemaphore == NULL) {
+		while (true)
+			;  // Something better maybe ?
 	}
 
 	circularBufferInit(&batteryVoltageHistory);
 }
 
 // called every 2000 ticks
-void menuRadioInfosPushBackVoltage(int32_t voltage)
-{
+void menuRadioInfosPushBackVoltage(int32_t voltage) {
 	// Store value each 40k ticks
-	if ((battery_stack_iter == 0) || (battery_stack_iter > BATTERY_ITER_PUSHBACK))
-	{
-		if (xSemaphoreTake(battSemaphore, (TickType_t)10) == pdTRUE)
-		{
+	if ((battery_stack_iter == 0) || (battery_stack_iter > BATTERY_ITER_PUSHBACK)) {
+		if (xSemaphoreTake(battSemaphore, (TickType_t)10) == pdTRUE) {
 			circularBufferPushBack(&batteryVoltageHistory, voltage);
 			xSemaphoreGive(battSemaphore);
 		}
@@ -487,29 +426,25 @@ void menuRadioInfosPushBackVoltage(int32_t voltage)
 	battery_stack_iter++;
 }
 
-static void updateVoicePrompts(bool spellIt)
-{
-	if (nonVolatileSettings.audioPromptMode >= AUDIO_PROMPT_MODE_VOICE_LEVEL_1)
-	{
+static void updateVoicePrompts(bool spellIt) {
+	if (nonVolatileSettings.audioPromptMode >= AUDIO_PROMPT_MODE_VOICE_LEVEL_1) {
 		char buffer[17];
 
 		voicePromptsInit();
-		switch (displayMode)
-		{
+		switch (displayMode) {
 			case RADIO_INFOS_BATTERY_LEVEL:
-			case RADIO_INFOS_BATTERY_GRAPH:
-			{
-				int volts, mvolts;
+			case RADIO_INFOS_BATTERY_GRAPH: {
+				int volts;
+				int mvolts;
 
 				voicePromptsAppendLanguageString(&currentLanguage->battery);
-				getBatteryVoltage(&volts,  &mvolts);
+				getBatteryVoltage(&volts, &mvolts);
 				snprintf(buffer, 17, " %1d.%1d", volts, mvolts);
 				voicePromptsAppendString(buffer);
 				voicePromptsAppendPrompt(PROMPT_VOLTS);
 			}
-			break;
-			case RADIO_INFOS_TEMPERATURE_LEVEL:
-			{
+				break;
+			case RADIO_INFOS_TEMPERATURE_LEVEL: {
 				int temperature = getTemperature();
 
 				voicePromptsAppendLanguageString(&currentLanguage->temperature);
@@ -517,11 +452,10 @@ static void updateVoicePrompts(bool spellIt)
 				voicePromptsAppendString(buffer);
 				voicePromptsAppendLanguageString(&currentLanguage->celcius);
 			}
-			break;
+				break;
 		}
 
-		if (spellIt)
-		{
+		if (spellIt) {
 			promptsPlayNotAfterTx();
 		}
 	}

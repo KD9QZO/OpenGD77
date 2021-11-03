@@ -16,23 +16,54 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#ifndef _OPENGD77_UTILS_H_
-#define _OPENGD77_UTILS_H_
+#ifndef OPENGD77_UTILS_H_
+#define OPENGD77_UTILS_H_
+
 
 #if !defined(CLAMP)
-#define CLAMP(x, low, high)  (((x) > (high)) ? (high) : (((x) < (low)) ? (low) : (x)))
+#define CLAMP(x, low, high)													\
+		(((x) > (high)) ? (high) : (((x) < (low)) ? (low) : (x)))
 #endif
+
 
 #if !defined(SAFE_MIN)
-#define SAFE_MIN(a, b) ({ typeof (a) _a = (a); typeof (b) _b = (b); _a < _b ? _a : _b; })
+#define SAFE_MIN(a, b)														\
+		(																	\
+			{																\
+				typeof(a) _a = (a);											\
+				typeof(b) _b = (b);											\
+				_a < _b ? _a : _b;											\
+			}																\
+		)
 #endif
+
 
 #if !defined(SAFE_MAX)
-#define SAFE_MAX(a, b) ({ typeof (a) _a = (a); typeof (b) _b = (b); _a > _b ? _a : _b; })
+#define SAFE_MAX(a, b)														\
+		(																	\
+			{																\
+				typeof(a) _a = (a);											\
+				typeof(b) _b = (b);											\
+				_a > _b ? _a : _b;											\
+			}																\
+		)
 #endif
+
 
 #if !defined(SAFE_SWAP)
-#define SAFE_SWAP(a, b) ({ typeof (a) _a = a; a = b; b = _a; })
+#define SAFE_SWAP(a, b)														\
+		(																	\
+			{																\
+				typeof(a) _a = a;											\
+				a = b;														\
+				b = _a;														\
+			}																\
+		)
 #endif
 
-#endif
+
+#define UNUSED(v)															\
+		((void)(v))
+
+
+#endif	/* !OPENGD77_UTILS_H_ */

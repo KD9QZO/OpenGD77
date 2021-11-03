@@ -23,38 +23,32 @@ static void updateScreen(void);
 static void handleEvent(uiEvent_t *ev);
 static menuStatus_t menuFirmwareInfoExitCode = MENU_STATUS_SUCCESS;
 
-menuStatus_t menuFirmwareInfoScreen(uiEvent_t *ev, bool isFirstRun)
-{
-	if (isFirstRun)
-	{
+menuStatus_t menuFirmwareInfoScreen(uiEvent_t *ev, bool isFirstRun) {
+	if (isFirstRun) {
 		menuDataGlobal.endIndex = 0;
 		updateScreen();
-	}
-	else
-	{
+	} else {
 		menuFirmwareInfoExitCode = MENU_STATUS_SUCCESS;
-		if (ev->hasEvent)
-		{
+		if (ev->hasEvent) {
 			handleEvent(ev);
 		}
 	}
 	return menuFirmwareInfoExitCode;
 }
 
-static void updateScreen(void)
-{
+static void updateScreen(void) {
 #if !defined(PLATFORM_GD77S)
 	char buf[17];
-	char * const *radioModel;
+	char *const*radioModel;
 
 	snprintf(buf, 16, "[ %s", GITVERSION);
-	buf[9] = 0; // git hash id 7 char long;
+	buf[9] = 0;  // git hash id 7 char long;
 	strcat(buf, " ]");
 
 	ucClearBuf();
 
 #if defined(PLATFORM_GD77)
-	radioModel = (char * const *)&currentLanguage->openGD77;
+	radioModel = (char* const*)&currentLanguage->openGD77;
 #elif defined(PLATFORM_DM1801)
 	radioModel = (char * const *)&currentLanguage->openDM1801;
 #elif defined(PLATFORM_RD5R)
@@ -67,8 +61,6 @@ static void updateScreen(void)
 	ucPrintCentered(5, *radioModel, FONT_SIZE_3);
 #endif
 
-
-
 #if defined(PLATFORM_RD5R)
 	ucPrintCentered(14, currentLanguage->built, FONT_SIZE_2);
 	ucPrintCentered(24,__TIME__, FONT_SIZE_2);
@@ -76,14 +68,14 @@ static void updateScreen(void)
 	ucPrintCentered(40, buf, FONT_SIZE_2);
 #else
 	ucPrintCentered(24, currentLanguage->built, FONT_SIZE_2);
-	ucPrintCentered(34,__TIME__, FONT_SIZE_2);
-	ucPrintCentered(44,__DATE__, FONT_SIZE_2);
+	ucPrintCentered(34, __TIME__, FONT_SIZE_2);
+	ucPrintCentered(44, __DATE__, FONT_SIZE_2);
 	ucPrintCentered(54, buf, FONT_SIZE_2);
 
 #endif
 
 	voicePromptsInit();
-	voicePromptsAppendLanguageString((const char * const *)radioModel);
+	voicePromptsAppendLanguageString((const char* const*)radioModel);
 	voicePromptsAppendLanguageString(&currentLanguage->built);
 	voicePromptsAppendString(__TIME__);
 	voicePromptsAppendString(__DATE__);
@@ -95,25 +87,19 @@ static void updateScreen(void)
 #endif
 }
 
-
-static void handleEvent(uiEvent_t *ev)
-{
-	if (ev->events & BUTTON_EVENT)
-	{
-		if (repeatVoicePromptOnSK1(ev))
-		{
+static void handleEvent(uiEvent_t *ev) {
+	if (ev->events & BUTTON_EVENT) {
+		if (repeatVoicePromptOnSK1(ev)) {
 			return;
 		}
 	}
 
-	if (KEYCHECK_SHORTUP(ev->keys, KEY_RED) || KEYCHECK_SHORTUP(ev->keys, KEY_GREEN))
-	{
+	if (KEYCHECK_SHORTUP(ev->keys, KEY_RED) || KEYCHECK_SHORTUP(ev->keys, KEY_GREEN)) {
 		menuSystemPopPreviousMenu();
 		return;
 	}
 
-	if (KEYCHECK_SHORTUP_NUMBER(ev->keys)  && (BUTTONCHECK_DOWN(ev, BUTTON_SK2)))
-	{
+	if (KEYCHECK_SHORTUP_NUMBER(ev->keys) && (BUTTONCHECK_DOWN(ev, BUTTON_SK2))) {
 		saveQuickkeyMenuIndex(ev->keys.key, menuSystemGetCurrentMenuNumber(), 0, 0);
 		return;
 	}

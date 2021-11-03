@@ -16,8 +16,8 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#ifndef _OPENGD77_I2S_H_
-#define _OPENGD77_I2S_H_
+#ifndef OPENGD77_I2S_H_
+#define OPENGD77_I2S_H_
 
 #include "fsl_port.h"
 #include "fsl_dmamux.h"
@@ -29,8 +29,7 @@
 
 #define NUM_I2S_BUFFERS 4
 
-
-#if defined(PLATFORM_GD77) || defined(PLATFORM_GD77S)
+#if (defined(PLATFORM_GD77) || defined(PLATFORM_GD77S))
 
 // I2S to C6000 (I2S)
 // OUT/ON  A16 - I2S FS to C6000
@@ -92,7 +91,6 @@
 
 #endif
 
-
 extern volatile bool g_TX_SAI_in_use;
 extern sai_edma_handle_t g_SAI_TX_Handle;
 extern sai_edma_handle_t g_SAI_RX_Handle;
@@ -101,7 +99,7 @@ void init_I2S(void);
 void setup_I2S(void);
 void I2SReset(void);
 void I2STerminateTransfers(void);
-void I2STransferReceive(uint8_t *buff,size_t bufferLen);
-void I2STransferTransmit(uint8_t *buff,size_t bufferLen);
+void I2STransferReceive(uint8_t *buff, size_t bufferLen);
+void I2STransferTransmit(uint8_t *buff, size_t bufferLen);
 
 #endif /* _OPENGD77_I2S_H_ */
