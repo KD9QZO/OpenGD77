@@ -19,115 +19,77 @@
 
 #include "user_interface/uiGlobals.h"
 
+
+
 const int DBM_LEVELS[16] = {
-		SMETER_S0, SMETER_S1, SMETER_S2, SMETER_S3, SMETER_S4, SMETER_S5, SMETER_S6, SMETER_S7, SMETER_S8,
-		SMETER_S9, SMETER_S9_10, SMETER_S9_20, SMETER_S9_30, SMETER_S9_40, SMETER_S9_50, SMETER_S9_60
+	SMETER_S0,
+	SMETER_S1,
+	SMETER_S2,
+	SMETER_S3,
+	SMETER_S4,
+	SMETER_S5,
+	SMETER_S6,
+	SMETER_S7,
+	SMETER_S8,
+	SMETER_S9,
+	SMETER_S9_10,
+	SMETER_S9_20,
+	SMETER_S9_30,
+	SMETER_S9_40,
+	SMETER_S9_50,
+	SMETER_S9_60
 };
 
-
-const char *POWER_LEVELS[]                  = { "50", "250", "500", "750", "1", "2", "3", "4", "5", "+W-"};
-const char *POWER_LEVEL_UNITS[]             = { "mW", "mW",  "mW",  "mW",  "W", "W", "W", "W", "W", ""};
+const char *POWER_LEVELS[] = { "50", "250", "500", "750", "1", "2", "3", "4", "5", "+W-" };
+const char *POWER_LEVEL_UNITS[] = { "mW", "mW", "mW", "mW", "W", "W", "W", "W", "W", "" };
 const char *DMR_DESTINATION_FILTER_LEVELS[] = { "TG", "Ct", "RxG" };
-const char *ANALOG_FILTER_LEVELS[]          = { "CTCSS|DCS" };
+const char *ANALOG_FILTER_LEVELS[] = { "CTCSS|DCS" };
 
+uiDataGlobal_t uiDataGlobal = {
+	.receivedPcId = 0x00,  // No current Private call awaiting acceptance
+	.tgBeforePcMode = 0,    // No TG saved, prior to a Private call being accepted.
+	.displayQSOState = QSO_DISPLAY_DEFAULT_SCREEN, .displayQSOStatePrev = QSO_DISPLAY_DEFAULT_SCREEN,
+	.displaySquelch = false, .isDisplayingQSOData = false, .displayChannelSettings = false, .reverseRepeater = false,
+	.currentSelectedChannelNumber = 0, .currentSelectedContactIndex = 0, .lastHeardCount = 0,
 
-uiDataGlobal_t uiDataGlobal =
-{
-		.receivedPcId 	              = 0x00, // No current Private call awaiting acceptance
-		.tgBeforePcMode 	          = 0,    // No TG saved, prior to a Private call being accepted.
-		.displayQSOState              = QSO_DISPLAY_DEFAULT_SCREEN,
-		.displayQSOStatePrev          = QSO_DISPLAY_DEFAULT_SCREEN,
-		.displaySquelch               = false,
-		.isDisplayingQSOData          = false,
-		.displayChannelSettings       = false,
-		.reverseRepeater              = false,
-		.currentSelectedChannelNumber = 0,
-		.currentSelectedContactIndex  = 0,
-		.lastHeardCount               = 0,
+	.Scan = {
+		.timer = 0, .timerReload = 30, .direction = 1, .availableChannelsCount = 0, .nuisanceDeleteIndex = 0,
+		.nuisanceDelete = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, .state = SCAN_SCANNING, .active = false,
+		.toneActive = false, .refreshOnEveryStep = false, .lastIteration = false, .scanType = SCAN_TYPE_NORMAL_STEP,
+		.stepTimeMilliseconds = 0 },
 
-		.Scan =
-		{
-				.timer                  = 0,
-				.timerReload			= 30,
-				.direction              = 1,
-				.availableChannelsCount = 0,
-				.nuisanceDeleteIndex    = 0,
-				.nuisanceDelete         = { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 },
-				.state                  = SCAN_SCANNING,
-				.active                 = false,
-				.toneActive             = false,
-				.refreshOnEveryStep     = false,
-				.lastIteration          = false,
-				.scanType               = SCAN_TYPE_NORMAL_STEP,
-				.stepTimeMilliseconds   = 0
-		},
+	.QuickMenu = {
+		.tmpDmrDestinationFilterLevel = 0, .tmpDmrCcTsFilterLevel = 0, .tmpAnalogFilterLevel = 0, .tmpTxRxLockMode = 0,
+		.tmpToneScanCSS = CSS_NONE, .tmpVFONumber = 0 },
 
-		.QuickMenu =
-		{
-				.tmpDmrDestinationFilterLevel = 0,
-				.tmpDmrCcTsFilterLevel        = 0,
-				.tmpAnalogFilterLevel         = 0,
-				.tmpTxRxLockMode              = 0,
-				.tmpToneScanCSS               = CSS_NONE,
-				.tmpVFONumber                 = 0
-		},
+	.FreqEnter = { .index = 0, .digits = { '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-' } },
 
-		.FreqEnter =
-		{
-				.index  = 0,
-				.digits = { '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-' }
-		},
+	.PrivateCall = { .lastID = 0, .state = PRIVATE_CALL_NOT_IN_CALL },
 
-		.PrivateCall =
-		{
-				.lastID = 0,
-				.state  = PRIVATE_CALL_NOT_IN_CALL
-		},
-
-		.VoicePrompts =
-		{
-				.inhibitInitial =
+	.VoicePrompts = { .inhibitInitial =
 #if defined(PLATFORM_GD77S)
-									true
+			true
 #else
-									false // Used to indicate whether the voice prompts should be reloaded with the channel name or VFO freq
+			false  // Used to indicate whether the voice prompts should be reloaded with the channel name or VFO freq
 #endif
-		},
+			},
 
-		.MessageBox =
-		{
-				.type              = MESSAGEBOX_TYPE_UNDEF,
-				.decoration        = MESSAGEBOX_DECORATION_NONE,
-				.buttons           = MESSAGEBOX_BUTTONS_NONE,
-				.pinLength         = 4,
-				.message           = { 0 },
-				.keyPressed        = 0,
-				.validatorCallback = NULL
-		},
+	.MessageBox = {
+		.type = MESSAGEBOX_TYPE_UNDEF, .decoration = MESSAGEBOX_DECORATION_NONE, .buttons = MESSAGEBOX_BUTTONS_NONE,
+		.pinLength = 4, .message = { 0 }, .keyPressed = 0, .validatorCallback = NULL },
 
-		.DTMFContactList =
-		{
-				.nextPeriod = 0U,
-				.isKeying   = false,
-				.buffer     = { 0xff },
-				.poLen      = 0U,
-				.poPtr      = 0U,
-				.durations  = { 0, 0, 0, 0, 0 },
-				.inTone     = false
-		}
+	.DTMFContactList = {
+		.nextPeriod = 0U, .isKeying = false, .buffer = { 0xff }, .poLen = 0U, .poPtr = 0U,
+		.durations = { 0, 0, 0, 0, 0 }, .inTone = false }
 
 };
 
-
-settingsStruct_t originalNonVolatileSettings =
-{
-		.magicNumber = 0xDEADBEEF
-};
+settingsStruct_t originalNonVolatileSettings = { .magicNumber = 0xDEADBEEF };
 
 struct_codeplugZone_t currentZone;
-__attribute__((section(".data.$RAM2"))) struct_codeplugRxGroup_t currentRxGroupData;
-int lastLoadedRxGroup = -1;// to show data for which RxGroupIndex has been loaded into    currentRxGroupData
+__attribute__((section(".data.$RAM2")))  struct_codeplugRxGroup_t currentRxGroupData;
+int lastLoadedRxGroup = -1;  // to show data for which RxGroupIndex has been loaded into    currentRxGroupData
 struct_codeplugContact_t currentContactData;
 
-bool PTTToggledDown = false; // PTT toggle feature
+bool PTTToggledDown = false;  // PTT toggle feature
 

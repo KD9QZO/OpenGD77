@@ -5,6 +5,7 @@
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
+
 #include "usb_device_config.h"
 #include "usb.h"
 #include "usb_device.h"
@@ -14,18 +15,33 @@
 
 #include "usb/usb_device_descriptor.h"
 
+
+
 /*******************************************************************************
  * Variables
  ******************************************************************************/
+
 /* Define endpoint for communication class */
-usb_device_endpoint_struct_t g_UsbDeviceCdcVcomCicEndpoints[USB_CDC_VCOM_ENDPOINT_CIC_COUNT] = { {
-USB_CDC_VCOM_INTERRUPT_IN_ENDPOINT | (USB_IN << 7U), USB_ENDPOINT_INTERRUPT,
-FS_CDC_VCOM_INTERRUPT_IN_PACKET_SIZE, }, };
+usb_device_endpoint_struct_t g_UsbDeviceCdcVcomCicEndpoints[USB_CDC_VCOM_ENDPOINT_CIC_COUNT] = {
+	{
+		USB_CDC_VCOM_INTERRUPT_IN_ENDPOINT | (USB_IN << 7U),
+		USB_ENDPOINT_INTERRUPT,
+		FS_CDC_VCOM_INTERRUPT_IN_PACKET_SIZE,
+	},
+};
 
 /* Define endpoint for data class */
-usb_device_endpoint_struct_t g_UsbDeviceCdcVcomDicEndpoints[USB_CDC_VCOM_ENDPOINT_DIC_COUNT] = { {
-USB_CDC_VCOM_BULK_IN_ENDPOINT | (USB_IN << 7U), USB_ENDPOINT_BULK, FS_CDC_VCOM_BULK_IN_PACKET_SIZE, }, {
-USB_CDC_VCOM_BULK_OUT_ENDPOINT | (USB_OUT << 7U), USB_ENDPOINT_BULK, FS_CDC_VCOM_BULK_OUT_PACKET_SIZE, } };
+usb_device_endpoint_struct_t g_UsbDeviceCdcVcomDicEndpoints[USB_CDC_VCOM_ENDPOINT_DIC_COUNT] = {
+	{
+		USB_CDC_VCOM_BULK_IN_ENDPOINT | (USB_IN << 7U),
+		USB_ENDPOINT_BULK,
+		FS_CDC_VCOM_BULK_IN_PACKET_SIZE,
+	}, {
+		USB_CDC_VCOM_BULK_OUT_ENDPOINT | (USB_OUT << 7U),
+		USB_ENDPOINT_BULK,
+		FS_CDC_VCOM_BULK_OUT_PACKET_SIZE,
+	}
+};
 
 /* Define interface for communication class */
 usb_device_interface_struct_t g_UsbDeviceCdcVcomCommunicationInterface[] = { { 0, {
@@ -44,8 +60,12 @@ usb_device_interfaces_struct_t g_UsbDeviceCdcVcomInterfaces[USB_CDC_VCOM_INTERFA
 	g_UsbDeviceCdcVcomDataInterface, sizeof(g_UsbDeviceCdcVcomDataInterface) / sizeof(usb_device_interfaces_struct_t) }, };
 
 /* Define configurations for virtual com */
-usb_device_interface_list_t g_UsbDeviceCdcVcomInterfaceList[USB_DEVICE_CONFIGURATION_COUNT] = { {
-USB_CDC_VCOM_INTERFACE_COUNT, g_UsbDeviceCdcVcomInterfaces, }, };
+usb_device_interface_list_t g_UsbDeviceCdcVcomInterfaceList[USB_DEVICE_CONFIGURATION_COUNT] = {
+	{
+		USB_CDC_VCOM_INTERFACE_COUNT,
+		g_UsbDeviceCdcVcomInterfaces,
+	},
+};
 
 /* Define class information for virtual com */
 usb_device_class_struct_t g_UsbDeviceCdcVcomConfig = {
@@ -103,11 +123,9 @@ uint8_t g_UsbDeviceConfigurationDescriptor[] = {
 	USB_CDC_VCOM_CONFIGURE_INDEX,
 	/* Index of string descriptor describing this configuration */
 	0,
-	/* Configuration characteristics D7: Reserved (set to one) D6: Self-powered D5: Remote Wakeup D4...0: Reserved
-	 (reset to zero) */
+	/* Configuration characteristics D7: Reserved (set to one) D6: Self-powered D5: Remote Wakeup D4...0: Reserved (reset to zero) */
 	(USB_DESCRIPTOR_CONFIGURE_ATTRIBUTE_D7_MASK) | (USB_DEVICE_CONFIG_SELF_POWER << USB_DESCRIPTOR_CONFIGURE_ATTRIBUTE_SELF_POWERED_SHIFT) | (USB_DEVICE_CONFIG_REMOTE_WAKEUP << USB_DESCRIPTOR_CONFIGURE_ATTRIBUTE_REMOTE_WAKEUP_SHIFT),
-	/* Maximum power consumption of the USB * device from the bus in this specific * configuration when the device is
-	 fully * operational. Expressed in 2 mA units *  (i.e., 50 = 100 mA).  */
+	/* Maximum power consumption of the USB * device from the bus in this specific * configuration when the device is fully operational. Expressed in 2 mA units *  (i.e., 50 = 100 mA).  */
 	USB_DEVICE_MAX_POWER,
 
 	/* Communication Interface Descriptor */
@@ -121,22 +139,19 @@ uint8_t g_UsbDeviceConfigurationDescriptor[] = {
 
 	USB_DESCRIPTOR_LENGTH_CDC_CALL_MANAG, /* Size of this descriptor in bytes */
 	USB_DESCRIPTOR_TYPE_CDC_CS_INTERFACE, /* CS_INTERFACE Descriptor Type */
-	USB_CDC_CALL_MANAGEMENT_FUNC_DESC, 0x01, /*Bit 0: Whether device handle call management itself 1, Bit 1: Whether device can send/receive call
-	 management information over a Data Class Interface 0 */
+	USB_CDC_CALL_MANAGEMENT_FUNC_DESC, 0x01, /*Bit 0: Whether device handle call management itself 1, Bit 1: Whether device can send/receive call management information over a Data Class Interface 0 */
 	0x01, /* Indicates multiplexed commands are handled via data interface */
 
 	USB_DESCRIPTOR_LENGTH_CDC_ABSTRACT, /* Size of this descriptor in bytes */
 	USB_DESCRIPTOR_TYPE_CDC_CS_INTERFACE, /* CS_INTERFACE Descriptor Type */
-	USB_CDC_ABSTRACT_CONTROL_FUNC_DESC, 0x06, /* Bit 0: Whether device supports the request combination of Set_Comm_Feature, Clear_Comm_Feature, and
-	 Get_Comm_Feature 0, Bit 1: Whether device supports the request combination of Set_Line_Coding,
-	 Set_Control_Line_State, Get_Line_Coding, and the notification Serial_State 1, Bit ...  */
+	USB_CDC_ABSTRACT_CONTROL_FUNC_DESC, 0x06, /* Bit 0: Whether device supports the request combination of Set_Comm_Feature, Clear_Comm_Feature, and Get_Comm_Feature 0, Bit 1: Whether device supports the request combination of Set_Line_Coding, Set_Control_Line_State, Get_Line_Coding, and the notification Serial_State 1, Bit ...  */
 
 	USB_DESCRIPTOR_LENGTH_CDC_UNION_FUNC, /* Size of this descriptor in bytes */
 	USB_DESCRIPTOR_TYPE_CDC_CS_INTERFACE, /* CS_INTERFACE Descriptor Type */
 	USB_CDC_UNION_FUNC_DESC, 0x00, /* The interface number of the Communications or Data Class interface  */
 	0x01, /* Interface number of subordinate interface in the Union  */
 
-	/*Notification Endpoint descriptor */
+	/* Notification Endpoint descriptor */
 	USB_DESCRIPTOR_LENGTH_ENDPOINT, USB_DESCRIPTOR_TYPE_ENDPOINT, USB_CDC_VCOM_INTERRUPT_IN_ENDPOINT | (USB_IN << 7U),
 	USB_ENDPOINT_INTERRUPT, USB_SHORT_GET_LOW(FS_CDC_VCOM_INTERRUPT_IN_PACKET_SIZE),
 	USB_SHORT_GET_HIGH(FS_CDC_VCOM_INTERRUPT_IN_PACKET_SIZE), FS_CDC_VCOM_INTERRUPT_IN_INTERVAL,
@@ -164,24 +179,44 @@ USB_DMA_INIT_DATA_ALIGN(USB_DATA_ALIGN_SIZE)
 uint8_t g_UsbDeviceString1[] = {
 	2U + 2U * 18U, USB_DESCRIPTOR_TYPE_STRING, 'N', 0x00U, 'X', 0x00U, 'P', 0x00U, ' ', 0x00U, 'S', 0x00U, 'E', 0x00U,
 	'M', 0x00U, 'I', 0x00U, 'C', 0x00U, 'O', 0x00U, 'N', 0x00U, 'D', 0x00U, 'U', 0x00U, 'C', 0x00U, 'T', 0x00U, 'O',
-	0x00U, 'R', 0x00U, 'S', 0x00U, };
+	0x00U, 'R', 0x00U, 'S', 0x00U,
+};
 
 USB_DMA_INIT_DATA_ALIGN(USB_DATA_ALIGN_SIZE)
 uint8_t g_UsbDeviceString2[] = {
 	2U + 2U * 20U, USB_DESCRIPTOR_TYPE_STRING, 'M', 0, 'C', 0, 'U', 0, ' ', 0, 'V', 0, 'I', 0, 'R', 0, 'T', 0, 'U', 0,
-	'A', 0, 'L', 0, ' ', 0, 'C', 0, 'O', 0, 'M', 0, ' ', 0, 'D', 0, 'E', 0, 'M', 0, 'O', 0 };
+	'A', 0, 'L', 0, ' ', 0, 'C', 0, 'O', 0, 'M', 0, ' ', 0, 'D', 0, 'E', 0, 'M', 0, 'O', 0
+};
 
 uint8_t *g_UsbDeviceStringDescriptorArray[USB_DEVICE_STRING_COUNT] = {
-	g_UsbDeviceString0, g_UsbDeviceString1, g_UsbDeviceString2 };
+	g_UsbDeviceString0,
+	g_UsbDeviceString1,
+	g_UsbDeviceString2
+};
 
 /* Define string descriptor size */
 uint32_t g_UsbDeviceStringDescriptorLength[USB_DEVICE_STRING_COUNT] = {
-	sizeof(g_UsbDeviceString0), sizeof(g_UsbDeviceString1), sizeof(g_UsbDeviceString2) };
-usb_language_t g_UsbDeviceLanguage[USB_DEVICE_LANGUAGE_COUNT] = { {
-	g_UsbDeviceStringDescriptorArray, g_UsbDeviceStringDescriptorLength, (uint16_t)0x0409, } };
+	sizeof(g_UsbDeviceString0),
+	sizeof(g_UsbDeviceString1),
+	sizeof(g_UsbDeviceString2)
+};
+
+usb_language_t g_UsbDeviceLanguage[USB_DEVICE_LANGUAGE_COUNT] = {
+	{
+		g_UsbDeviceStringDescriptorArray,
+		g_UsbDeviceStringDescriptorLength,
+		(uint16_t)0x0409,
+	}
+};
 
 usb_language_list_t g_UsbDeviceLanguageList = {
-	g_UsbDeviceString0, sizeof(g_UsbDeviceString0), g_UsbDeviceLanguage, USB_DEVICE_LANGUAGE_COUNT, };
+	g_UsbDeviceString0,
+	sizeof(g_UsbDeviceString0),
+	g_UsbDeviceLanguage,
+	USB_DEVICE_LANGUAGE_COUNT,
+};
+
+
 
 /*******************************************************************************
  * Code

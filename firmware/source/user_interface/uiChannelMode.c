@@ -15,6 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
+
 #include "functions/codeplug.h"
 #include "functions/settings.h"
 #include "functions/trx.h"
@@ -24,9 +25,9 @@
 #include "functions/voicePrompts.h"
 #include "functions/ticks.h"
 
+
 #if defined(PLATFORM_GD77S)
-typedef enum
-{
+typedef enum {
 	GD77S_UIMODE_TG_OR_SQUELCH,
 	GD77S_UIMODE_SCAN,
 	GD77S_UIMODE_TS,
@@ -38,22 +39,20 @@ typedef enum
 	GD77S_UIMODE_MAX
 } GD77S_UIMODES_t;
 
-typedef struct
-{
-	bool             firstRun;
-	GD77S_UIMODES_t  uiMode;
-	bool             channelOutOfBounds;
-	uint16_t         dtmfListSelected;
-	int32_t          dtmfListCount;
+typedef struct {
+	bool firstRun;
+	GD77S_UIMODES_t uiMode;
+	bool channelOutOfBounds;
+	uint16_t dtmfListSelected;
+	int32_t dtmfListCount;
 } GD77SParameters_t;
 
-static GD77SParameters_t GD77SParameters =
-{
-		.firstRun = true,
-		.uiMode = GD77S_UIMODE_TG_OR_SQUELCH,
-		.channelOutOfBounds = false,
-		.dtmfListSelected = 0,
-		.dtmfListCount = 0
+static GD77SParameters_t GD77SParameters = {
+	.firstRun = true,
+	.uiMode = GD77S_UIMODE_TG_OR_SQUELCH,
+	.channelOutOfBounds = false,
+	.dtmfListSelected = 0,
+	.dtmfListCount = 0
 };
 
 static void buildSpeechUiModeForGD77S(GD77S_UIMODES_t uiMode);
@@ -115,7 +114,7 @@ menuStatus_t uiChannelMode(uiEvent_t *ev, bool isFirstRun) {
 
 		lastHeardClearLastID();
 		uiDataGlobal.displayQSOStatePrev = QSO_DISPLAY_IDLE;
-		currentChannelData = &channelScreenChannelData;	// Need to set this as currentChannelData is used by functions called by loadChannelData()
+		currentChannelData = &channelScreenChannelData;  // Need to set this as currentChannelData is used by functions called by loadChannelData()
 
 		if (currentChannelData->rxFreq != 0) {
 			loadChannelData(true, false);
@@ -251,7 +250,7 @@ uint16_t byteSwap16(uint16_t in)
 static bool canCurrentZoneBeScanned(int *availableChannels) {
 	int enabledChannels = 0;
 	int chanIdx = (
-			CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone) ? nonVolatileSettings.currentChannelIndexInAllZone : currentZone.channels[nonVolatileSettings.currentChannelIndexInZone]);
+	CODEPLUG_ZONE_IS_ALLCHANNELS(currentZone) ? nonVolatileSettings.currentChannelIndexInAllZone : currentZone.channels[nonVolatileSettings.currentChannelIndexInZone]);
 
 	if (currentZone.NOT_IN_CODEPLUGDATA_numChannelsInZone > 1) {
 		int chansInZone = currentZone.NOT_IN_CODEPLUGDATA_numChannelsInZone;
@@ -858,7 +857,7 @@ static void handleEvent(uiEvent_t *ev) {
 							}
 						}
 					}
-					settingsSet(nonVolatileSettings.overrideTG, 0);	// setting the override TG to 0 indicates the TG is not overridden
+					settingsSet(nonVolatileSettings.overrideTG, 0);  // setting the override TG to 0 indicates the TG is not overridden
 					menuPrivateCallClear();
 					updateTrxID();
 					// We're in digital mode, RXing, and current talker is already at the top of last heard list,
@@ -911,7 +910,7 @@ static void handleEvent(uiEvent_t *ev) {
 							}
 						}
 					}
-					settingsSet(nonVolatileSettings.overrideTG, 0);	// setting the override TG to 0 indicates the TG is not overridden
+					settingsSet(nonVolatileSettings.overrideTG, 0);  // setting the override TG to 0 indicates the TG is not overridden
 					menuPrivateCallClear();
 					updateTrxID();
 					// We're in digital mode, RXing, and current talker is already at the top of last heard list,
@@ -1576,14 +1575,13 @@ static void updateTrxID(void) {
 }
 
 static void scanning(void) {
-	if ((uiDataGlobal.Scan.state == SCAN_SCANNING) && (uiDataGlobal.Scan.timer > SCAN_SKIP_CHANNEL_INTERVAL) && (uiDataGlobal.Scan.timer < (uiDataGlobal.Scan.timerReload - SCAN_FREQ_CHANGE_SETTLING_INTERVAL)))//after initial settling time
-	{
-		//test for presence of RF Carrier.
+	if ((uiDataGlobal.Scan.state == SCAN_SCANNING) && (uiDataGlobal.Scan.timer > SCAN_SKIP_CHANNEL_INTERVAL) && (uiDataGlobal.Scan.timer < (uiDataGlobal.Scan.timerReload - SCAN_FREQ_CHANGE_SETTLING_INTERVAL))) {	//after initial settling time
+		// test for presence of RF Carrier.
 		// In FM mode the DMR slot_state will always be DMR_STATE_IDLE
 		if ((slot_state != DMR_STATE_IDLE) && ((dmrMonitorCapturedTS != -1) && (((trxDMRModeRx == DMR_MODE_DMO) && (dmrMonitorCapturedTS == trxGetDMRTimeSlot())) || trxDMRModeRx == DMR_MODE_RMO))) {
 			uiDataGlobal.Scan.state = SCAN_PAUSED;
 
-#if ! defined(PLATFORM_GD77S) // GD77S handle voice prompts on its own
+#if !defined(PLATFORM_GD77S) // GD77S handle voice prompts on its own
 			// Reload the channel as voice prompts aren't set while scanning
 			if (nonVolatileSettings.audioPromptMode >= AUDIO_PROMPT_MODE_VOICE_LEVEL_1) {
 				loadChannelData(false, true);
@@ -1600,7 +1598,7 @@ static void scanning(void) {
 			}
 		} else {
 			if (trxCarrierDetected()) {
-#if ! defined(PLATFORM_GD77S) // GD77S handle voice prompts on its own
+#if !defined(PLATFORM_GD77S) // GD77S handle voice prompts on its own
 				// Reload the channel as voice prompts aren't set while scanning
 				if (nonVolatileSettings.audioPromptMode >= AUDIO_PROMPT_MODE_VOICE_LEVEL_1) {
 					loadChannelData(false, true);
@@ -1612,8 +1610,8 @@ static void scanning(void) {
 				} else {
 					uiDataGlobal.displayQSOState = QSO_DISPLAY_DEFAULT_SCREEN;  // Force screen refresh
 
-					uiDataGlobal.Scan.timer = SCAN_SHORT_PAUSE_TIME;//start short delay to allow full detection of signal
-					uiDataGlobal.Scan.state = SCAN_SHORT_PAUSED;//state 1 = pause and test for valid signal that produces audio
+					uiDataGlobal.Scan.timer = SCAN_SHORT_PAUSE_TIME;  //start short delay to allow full detection of signal
+					uiDataGlobal.Scan.state = SCAN_SHORT_PAUSED;  //state 1 = pause and test for valid signal that produces audio
 				}
 
 			}
