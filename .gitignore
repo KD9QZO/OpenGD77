@@ -1,0 +1,59 @@
+#
+# .gitignore
+#
+
+# Ignore backup files
+*~
+*.bak
+
+
+# Ignore thumbnails created by Windows
+Thumbs.db
+
+
+# Ignore files built by Visual Studio
+*.obj
+*.exe
+*.pdb
+*.user
+*.aps
+*.pch
+*.vspscc
+*_i.c
+*_p.c
+*.ncb
+*.suo
+*.tlb
+*.tlh
+*.bak
+*.cache
+*.ilk
+*.log
+[Bb]in
+[Dd]ebug*/
+*.lib
+*.sbr
+obj/
+[Rr]elease*/
+_ReSharper*/
+[Tt]est[Rr]esult*
+.vs/
+
+
+# Ignore project-specific files built by Visual Studio
+/ComTool/.vs/
+/ComTool/[Bb]in/
+/ComTool/[Oo]bj/
+/ComTool/[Dd]ebug*/
+/ComTool/[Rr]elease*/
+
+
+# Ignore Nuget packages folder
+packages/
+
+
+# Ignore additional project-specific files and folders
+/firmware/.settings/language.settings.xml
+/firmware/linkerdata/codec_bin_section_1.bin
+/firmware/linkerdata/codec_bin_section_2.bin
+/OpenGD77CommDriver/OpenGD77-serial-driver-files/
