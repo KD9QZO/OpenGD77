@@ -32,36 +32,48 @@
 #include "SeggerRTT/RTT/SEGGER_RTT.h"
 #endif
 
+
 #ifdef NDEBUG
-#error A firmware compiled in Release mode will not work, yet
-#error Change target build to Debug then Clean the build and recompile
-#endif
+#if !defined(FORCE_RELEASE)
+#error 'A firmware compiled in "Release" mode will not work yet; please change the target build to "Debug", and perform a clean recompile of the project.'
+#else	/* !defined(FORCE_RELEASE) */
+#warning 'Firmware compiled in "Release" mode is unsupported and likely to encounter issues! Proceed at your own risk!'
+#endif	/* defined(FORCE_RELEASE) */
+#endif	/* NDEBUG */
+
+
+
+#define TASK_MAIN_NAME "fw main task"
+#define TASK_MAIN_SIZE (5000L / sizeof(portSTACK_TYPE))
+#define TASK_MAIN_ARGS (NULL)
+#define TASK_MAIN_PRIO (6U)
+
 
 //#define READ_CPUID
+
 
 void mainTask(void *data);
 #if defined(READ_CPUID)
 void debugReadCPUID(void);
-#endif
+#endif	/* defined(READ_CPUID) */
+
 
 TaskHandle_t mainTaskHandle;
 
+
 static uint32_t lowbatteryTimer = 0;
-static const int LOW_BATTERY_INTERVAL = ((1000 * 60) * 5);  // 5 minute;
-static const int LOW_BATTERY_WARNING_VOLTAGE_DIFFERENTIAL = 6;	// Offset between the minimum voltage and when the battery warning audio starts. 6 = 0.6V
+static const int LOW_BATTERY_INTERVAL = ((1000 * 60) * 5);		/* 5 minute offset between the minimum voltage and when the battery warning audio starts... */
+static const int LOW_BATTERY_WARNING_VOLTAGE_DIFFERENTIAL = 6;	/* 6 = 0.6V */
 static bool updateMessageOnScreen = false;
 
+
+
 void mainTaskInit(void) {
-	xTaskCreate(mainTask, /* pointer to the task */
-	"fw main task", /* task name for kernel awareness debugging */
-	5000L / sizeof(portSTACK_TYPE), /* task stack size */
-	NULL, /* optional task startup argument */
-	6U, /* initial priority */
-	mainTaskHandle /* optional task handle to create */
-	);
+	xTaskCreate(mainTask, TASK_MAIN_NAME, TASK_MAIN_SIZE, TASK_MAIN_ARGS, TASK_MAIN_PRIO, mainTaskHandle);
 
 	vTaskStartScheduler();
 }
+
 
 static void die(bool usbMonitoring) {
 #if !defined(PLATFORM_RD5R)
@@ -178,10 +190,10 @@ static bool validateUpdateCallback(void) {
 	if (uiDataGlobal.MessageBox.keyPressed == KEY_GREEN) {
 		updateMessageOnScreen = false;
 		settingsSetOptionBit(BIT_SETTINGS_UPDATED, false);
-		return true;
+		return (true);
 	}
 
-	return false;
+	return (false);
 }
 
 static void settingsUpdateAudioAlert(void) {
@@ -218,20 +230,21 @@ void mainTask(void *data) {
 	int *quickkeyPushedMenuMelody = NULL;
 
 	clockManagerInit();
-	// Init SPI
+
+	/* Init SPI */
 	SPIInit();
 
-	// Init I2S
+	/* Init I2S */
 	init_I2S();
 	setup_I2S();
 
-	// Init ADC
+	/* Init ADC */
 	adcInit();
 
-	// Init DAC
+	/* Init DAC */
 	dac_init();
 
-	// Init I2C
+	/* Init I2C */
 	I2C0aInit();
 	gpioInitCommon();
 	buttonsInit();
@@ -239,7 +252,7 @@ void mainTask(void *data) {
 	keyboardInit();
 	rotarySwitchInit();
 
-	buttonsCheckButtonsEvent(&buttons, &button_event, false);			// Read button state and event
+	buttonsCheckButtonsEvent(&buttons, &button_event, false);			/* Read button state and event */
 
 	if (buttons & BUTTON_SK2) {
 		wasRestoringDefaultsettings = true;
@@ -251,17 +264,17 @@ void mainTask(void *data) {
 	gpioInitDisplay();
 	displayInit(settingsIsOptionBitSet(BIT_INVERSE_VIDEO));
 
-	// We shouldn't go further if calibration related initialization has failed
+	/* We shouldn't go further if calibration related initialization has failed */
 	if ((SPI_Flash_init() == false) || (calibrationInit() == false) || (calibrationCheckAndCopyToCommonLocation(false) == false)) {
 		showErrorMessage("CAL DATA ERROR");
 		USB_DeviceApplicationInit();
 		die(true);
 	}
 
-	// Init AT1846S
+	/* Init AT1846S */
 	AT1846Init();
 
-	// Init HR-C6000
+	/* Init HR-C6000 */
 	HRC6000_init();
 	AT1846Postinit();
 
@@ -468,9 +481,9 @@ void mainTask(void *data) {
 					if (key_event == EVENT_KEY_CHANGE) {
 						bool continueToFilterKeys = true;
 
-						// A key is pressed, but a message box is currently displayed (probably a private call notification)
+						/* A key is pressed, but a message box is currently displayed (probably a private call notification) */
 						if (menuSystemGetCurrentMenuNumber() == UI_MESSAGE_BOX) {
-							// Clear any key but RED and GREEN
+							/* Clear any key but RED and GREEN */
 							if ((keys.key == KEY_RED) || (keys.key == KEY_GREEN)) {
 								continueToFilterKeys = false;
 							}
@@ -489,13 +502,12 @@ void mainTask(void *data) {
 						}
 					}
 
-					// Lockout ORANGE AND BLUE (BLACK stay active regardless lock status, useful to trigger backlight)
+					/* Lockout ORANGE AND BLUE (BLACK stay active regardless lock status, useful to trigger backlight) */
 #if defined(PLATFORM_RD5R)
-					if ((button_event == EVENT_BUTTON_CHANGE) && (buttons & BUTTON_SK2))
+					if ((button_event == EVENT_BUTTON_CHANGE) && (buttons & BUTTON_SK2)) {
 #else
-					if ((button_event == EVENT_BUTTON_CHANGE) && ((buttons & BUTTON_ORANGE) || (buttons & BUTTON_SK2)))
+					if ((button_event == EVENT_BUTTON_CHANGE) && ((buttons & BUTTON_ORANGE) || (buttons & BUTTON_SK2))) {
 #endif
-							{
 						if ((PTTToggledDown == false) && (menuSystemGetCurrentMenuNumber() != UI_LOCK_SCREEN)) {
 							menuSystemPushNewMenu(UI_LOCK_SCREEN);
 						}
@@ -942,19 +954,21 @@ void mainTask(void *data) {
 }
 
 #if defined(READ_CPUID)
-void debugReadCPUID(void)
-{
+void debugReadCPUID(void) {
 	char tmp[6];
-	char buf[512]={0};
-	uint8_t *p = (uint8_t *)0x40048054;
+	char buf[512] = { 0 };
+	uint8_t *p = (uint8_t*)0x40048054;
+
 	USB_DEBUG_PRINT("\nCPU ID\n");
+
 	vTaskDelay(portTICK_PERIOD_MS * 1);
-	for(int i = 0; i < 16; i++)
-	{
-		sprintf(tmp, "%02x ", *p);
+
+	for (int i = 0; i < 16; i++) {
+		sprintf(tmp, "%02X ", *p);
 		strcat(buf, tmp);
 		p++;
 	}
+
 	USB_DEBUG_PRINT(buf);
 
 	vTaskDelay(portTICK_PERIOD_MS * 1);
@@ -963,16 +977,17 @@ void debugReadCPUID(void)
 
 	buf[0] = 0;
 #if defined(PLATFORM_DM1801)
-	p = (uint8_t *)0x3800;
+	p = (uint8_t*)0x3800;
 #else
-	p = (uint8_t *)0x7f800;
+	p = (uint8_t*)0x7f800;
 #endif
-	for(int i = 0; i < 36; i++)
-	{
-		sprintf(tmp, "%02x ", *p);
+	for (int i = 0; i < 36; i++) {
+		sprintf(tmp, "%02X ", *p);
 		strcat(buf, tmp);
 		p++;
 	}
+
 	USB_DEBUG_PRINT(buf);
 }
-#endif
+
+#endif	/* defined(READ_CPUID) */

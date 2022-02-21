@@ -1318,14 +1318,10 @@ void uiUtilityDrawRSSIBarGraph(void) {
 #if 0 // Commented for now, maybe an option later.
 	int xPos = 0;
 	int currentMode = trxGetMode();
-	for (uint8_t i = 1; ((i < 10) && (xPos <= barWidth)); i += 2)
-	{
-		if ((i <= 9) || (currentMode == RADIO_MODE_DIGITAL))
-		{
+	for (uint8_t i = 1; ((i < 10) && (xPos <= barWidth)); i += 2) {
+		if ((i <= 9) || (currentMode == RADIO_MODE_DIGITAL)) {
 			xPos = rssiMeterHeaderBar[i];
-		}
-		else
-		{
+		} else {
 			xPos = ((rssiMeterHeaderBar[i] - rssiMeterHeaderBar[9]) / 5) + rssiMeterHeaderBar[9];
 		}
 		xPos *= 2;
